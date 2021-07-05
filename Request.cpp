@@ -27,9 +27,9 @@ optional<Request::Type> convertRequestTypeFromString(string_view type_str, const
     }
 }
 
-RequestHolder parseRequest(string_view request_str, IS_QUERY is_query)
+RequestHolder parseRequest(string_view request_str, QueryType is_query)
 {
-    const TypeTable& table = (is_query == IS_QUERY::YES)
+    const TypeTable& table = (is_query == QueryType::READ)
         ? STR_TO_QUERY_TYPE
         : STR_TO_REQUEST_TYPE;
     const auto request_type = convertRequestTypeFromString(readToken(request_str), table);

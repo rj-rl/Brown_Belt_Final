@@ -26,8 +26,8 @@ int main()
 {
     setOutPrecision();
 
-    const auto fill_requests  = readRequests<IS_QUERY::NO>(); // filling the DB
-    const auto query_requests = readRequests<IS_QUERY::YES>(); // reading DB queries
+    const auto fill_requests  = readRequests<QueryType::MODIFY>(); // filling the DB
+    const auto query_requests = readRequests<QueryType::READ>(); // reading DB queries
 
     processRequests(fill_requests);
     const auto query_responses = processRequests(query_requests);
@@ -35,3 +35,4 @@ int main()
    
     return 0;
 }
+ 

@@ -111,18 +111,18 @@ struct GetBusInfo : QueryRequest<Response> {
 };
 
 //======================================= UTILITY ==============================================//
-
-enum class IS_QUERY {
-    NO,
-    YES,
+// Determines if a request is a query to DB
+enum class QueryType {
+    MODIFY,
+    READ,
 };
 
 std::optional<Request::Type> convertRequestTypeFromString(
     std::string_view type_str, const TypeTable& table);
 
-RequestHolder parseRequest(std::string_view request_str, IS_QUERY is_query);
+RequestHolder parseRequest(std::string_view request_str, QueryType is_query);
 
-template <IS_QUERY is_query>
+template <QueryType is_query>
 std::vector<RequestHolder> readRequests(std::istream& in = std::cin)
 {
     const size_t request_count = readNumberOnLine<size_t>(in);
