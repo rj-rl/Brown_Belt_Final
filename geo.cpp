@@ -1,8 +1,16 @@
 #include "geo.h"
+#include "util.h"
+
 #include <cmath>
 using namespace std;
 
 namespace geo {
+
+void Coordinate::parseFromStr(std::string_view input)
+{
+    lat = strToNum<double>(readToken(input, ", "));
+    lon = strToNum<double>(readToken(input));
+}
 
 // haversine formula
 double distance(Coordinate punkt_a, Coordinate punkt_b)

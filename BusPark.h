@@ -4,9 +4,11 @@
 #include <string>
 #include <utility>
 
+using Id = int;
+
 class Bus {
 public:
-	Bus(int id, std::vector<Stop> stops)	// take stops by value to store them
+	Bus(Id id, std::vector<Stop> stops)	// take stops by value to store them
 		: id_ {id}
 		, stops_ {std::move(stops)}
 	{}
@@ -16,7 +18,7 @@ public:
 	double	routeLen() const;
 
 private:
-	int					id_;
+	Id					id_;
 	std::vector<Stop>	stops_;
 };
 
@@ -30,8 +32,8 @@ public:
 		buses_.push_back(std::move(bus));
 	}
 
-	Bus*		getBus(int id);
-	const Bus*	getBus(int id) const;
+	Bus*		getBus(Id id);
+	const Bus*	getBus(Id id) const;
 
 private:
 	std::vector<Bus> buses_;

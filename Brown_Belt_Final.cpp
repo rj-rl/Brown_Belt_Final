@@ -26,8 +26,12 @@ int main()
 {
     setOutPrecision();
 
-    const auto fill_requests  = readRequests(); // filling the DB
-    const auto query_requests = readRequests(); // reading DB queries
+    const auto fill_requests  = readRequests<IS_QUERY::NO>(); // filling the DB
+    const auto query_requests = readRequests<IS_QUERY::YES>(); // reading DB queries
+
+    processRequests(fill_requests);
+    const auto query_responses = processRequests(query_requests);
+    printResponses(query_responses);
    
     return 0;
 }

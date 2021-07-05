@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <string_view>
 
 namespace geo {
 
@@ -15,7 +16,8 @@ struct Coordinate {
 		: lat {lat}
 		, lon {lon}
 	{}
-
+	
+	void parseFromStr(std::string_view input);
 	//static_assert(std::is_arithmetic_v<Number>, "T is not arithmetic type (in Coordinate<T>)");
 };
 
