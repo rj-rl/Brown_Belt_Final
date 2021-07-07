@@ -28,16 +28,30 @@ double RouteManager::getBusRouteLen(Id bus_id) const
 	return bus->routeLen(map_);
 }
 
-double RouteManager::getBusStopCount(Id bus_id) const
+size_t RouteManager::getBusStopCount(Id bus_id) const
 {
-	// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	return 0.0;
+	Bus* bus = bus_park_.getBus(bus_id);
+		// this should never happen, we only call this function when 'bus_id' is tracked
+	if (not bus) throw runtime_error("BusPark::getBus returned nullptr");
+	return bus->stopCount();
 }
 
-double RouteManager::getBusUniqueStopCount(Id bus_id) const
+size_t RouteManager::getBusUniqueStopCount(Id bus_id) const
 {
-	// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	return 0.0;
+	Bus* bus = bus_park_.getBus(bus_id);
+			// this should never happen, we only call this function when 'bus_id' is tracked
+	if (not bus) throw runtime_error("BusPark::getBus returned nullptr");
+	return bus->uniqueStopCount();
+}
+
+const Bus* RouteManager::getBus(Id bus_id) const
+{
+	return bus_park_.getBus(bus_id);
+}
+
+Bus* RouteManager::getBus(Id bus_id)
+{
+	return bus_park_.getBus(bus_id);
 }
 
 bool RouteManager::isTracking(Id bus_id) const

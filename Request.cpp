@@ -1,6 +1,7 @@
 #include "Request.h"
 #include "util.h"
 #include <stdexcept>
+#include <sstream>
 using namespace std;
 
 RequestHolder Request::create(Request::Type type)
@@ -44,24 +45,28 @@ RequestHolder parseRequest(string_view request_str, QueryType is_query)
     return request;
 }
 
-vector<Response> processRequests(const vector<RequestHolder>& requests)
+vector<Response> processRequests(
+    const vector<RequestHolder>& modify_requests,
+    const vector<RequestHolder>& query_requests)
 {
     Map map;
     BusPark bus_park;
     RouteManager manager(map, bus_park);
     vector<Response> result;
 
-    for (const auto& request_holder : requests) {
+        // requests without return values (aka ModifyRequests) go here
+    for (const auto& request_holder : modify_requests) {
+        auto& request = static_cast<ModifyRequest&>(*request_holder);
+        request.process(manager);
+    }
+
+    for (const auto& request_holder : query_requests) {
         if (request_holder->type == Request::Type::GET_BUS_INFO) {
             const auto& request = static_cast<const GetBusInfo&>(*request_holder);
             result.push_back(request.process(manager));
         }
-        // requests without return values (aka ModifyRequests) go here
-        else {  
-            auto& request = static_cast<ModifyRequest&>(*request_holder);
-            request.process(manager);
-        }
     }
+
     return result;
 }
 
@@ -78,9 +83,7 @@ void printResponses(const vector<Response>& responses, ostream& out)
     for (const auto& response : responses) {
         out << "Bus " << response.bus_id << ": ";
         if (response.data) {
-            out << response.data->stop_cnt << "stops on route, "
-                << response.data->unique_stop_cnt << "unique stops, "
-                << response.data->route_len << "route length";
+            print_data(response, out);
             out << '\n';
         }
         else {
@@ -104,7 +107,9 @@ Route::Type AddBusRequest::parseRouteType(string_view input)
         return Route::Type::CIRCLE;
     }
     else {
-        throw runtime_error("Invalid route delimiter format: " + input[0]);
+        stringstream ss;
+        ss << "Invalid route delimiter format: " << input[0];
+        throw runtime_error(ss.str());
     }
 }
 
@@ -144,9 +149,10 @@ Response GetBusInfo::process(RouteManager& route_mgr) const
 {
     Response response {bus_id};
     if (route_mgr.isTracking(bus_id)) {
-        response.data->route_len = route_mgr.getBusRouteLen(bus_id);
+        response.data = Response::Data();
         response.data->stop_cnt = route_mgr.getBusStopCount(bus_id);
         response.data->unique_stop_cnt = route_mgr.getBusUniqueStopCount(bus_id);
+        response.data->route_len = route_mgr.getBusRouteLen(bus_id);
     }
     return response;
 }

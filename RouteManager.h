@@ -17,8 +17,11 @@ public:
 	void	addBus(Bus bus);
 	Route	buildRoute(const std::vector<std::string>& stop_names, Route::Type type) const;
 	double	getBusRouteLen(Id bus_id) const;
-	double	getBusStopCount(Id bus_id) const;
-	double	getBusUniqueStopCount(Id bus_id) const;
+	size_t	getBusStopCount(Id bus_id) const;
+	size_t	getBusUniqueStopCount(Id bus_id) const;
+
+	const Bus*  getBus(Id bus_id) const;
+	Bus*		getBus(Id bus_id);
 	
 	// check if 'bus_id' is being tracked by our 'bus_park_'
 	bool	isTracking(Id bus_id) const;

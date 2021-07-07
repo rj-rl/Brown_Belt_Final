@@ -19,6 +19,8 @@ struct Response {
         size_t  stop_cnt = 0;
         size_t  unique_stop_cnt = 0;
         double  route_len = 0.0;
+
+        Data() = default;
     };
 
     Id bus_id = 0;
@@ -145,6 +147,8 @@ std::vector<RequestHolder> readRequests(std::istream& in = std::cin)
     return requests;
 }
 
-std::vector<Response> processRequests(const std::vector<RequestHolder>& requests);
+std::vector<Response> processRequests(
+    const std::vector<RequestHolder>& modify_requests,
+    const std::vector<RequestHolder>& query_requests);
 
 void printResponses(const std::vector<Response>&, std::ostream& stream = std::cout);

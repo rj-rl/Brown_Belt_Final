@@ -1,11 +1,11 @@
 #pragma once
-
 #include "geo.h"
 #include <string>
 #include <string_view>
 #include <vector>
 #include <deque>
 #include <unordered_map>
+#include <optional>
 
 struct Stop {
 	std::string_view name;		// string_view makes sure Stops are cheap to copy
@@ -34,11 +34,12 @@ struct Route {
 		LINE,
 	};
 
-	std::vector<Stop> stops;
-	Type			  type;
+	Type							type;
+	std::vector<Stop>				stops;
+	mutable std::optional<double>	cached_length;
 
 	void addStop(Stop);
-	size_t getLength(const Map& map) const;
+	double getLength(const Map& map) const;
 	size_t getStopCount() const;
 	size_t getUniqueStopCount() const;
 };
@@ -52,12 +53,15 @@ public:
 	void addStop(std::string name, geo::Coordinate location);
 	Route buildRouteLine(const std::vector<std::string>& stop_names) const;
 	Route buildRouteCirc(const std::vector<std::string>& stop_names) const;
+	double distance(std::string_view a, std::string_view b) const;
 
 private:
 	std::unordered_map<std::string_view, Stop> stops_;
 
 // utility
 private:
+	std::deque<std::string> owned_names_;	// to make life easier with all the str_views
+	
 	using Segment = std::pair<geo::Coordinate, geo::Coordinate>;
 	struct SegmentHasher {
 		size_t operator() (const Segment& seg) const
@@ -69,7 +73,4 @@ private:
 		}
 	};
 	mutable std::unordered_map<Segment, double, SegmentHasher> distance_cache_;
-
-	std::deque<std::string> owned_names_;	// to make life easier with all the str_views
-	size_t distance(std::string_view a, std::string_view b) const;
 };

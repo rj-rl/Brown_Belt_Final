@@ -25,18 +25,20 @@ using namespace std;
 
 int main()
 {
-    TestRunner tr;
-    RUN_TEST(tr, test_stop_hash);
+    //TestRunner tr;
+    //RUN_TEST(tr, test_stop_hash);
 
     setOutPrecision();
 
-    const auto fill_requests  = readRequests<QueryType::MODIFY>(); // filling the DB
+    try {
+    const auto modify_requests  = readRequests<QueryType::MODIFY>(); // filling the DB
     const auto query_requests = readRequests<QueryType::READ>(); // reading DB queries
-
-    processRequests(fill_requests);
-    const auto query_responses = processRequests(query_requests);
-    printResponses(query_responses);
-   
+        const auto query_responses = processRequests(modify_requests, query_requests);
+        printResponses(query_responses);
+    }
+    catch (exception& e) {
+        cout << e.what();
+    }
     return 0;
 }
  
