@@ -1,5 +1,6 @@
 #include "Request.h"
-
+#include "util.h"
+#include <stdexcept>
 using namespace std;
 
 RequestHolder Request::create(Request::Type type)
@@ -45,18 +46,22 @@ RequestHolder parseRequest(string_view request_str, QueryType is_query)
 
 vector<Response> processRequests(const vector<RequestHolder>& requests)
 {
+    Map map;
+    BusPark bus_park;
+    RouteManager manager(map, bus_park);
     vector<Response> result;
 
     for (const auto& request_holder : requests) {
         if (request_holder->type == Request::Type::GET_BUS_INFO) {
             const auto& request = static_cast<const GetBusInfo&>(*request_holder);
-            result.push_back(request.process());
+            result.push_back(request.process(manager));
         }
-        else {
-
+        // requests without return values (aka ModifyRequests) go here
+        else {  
+            auto& request = static_cast<ModifyRequest&>(*request_holder);
+            request.process(manager);
         }
     }
-    // PLACEHOLDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     return result;
 }
 
@@ -71,7 +76,7 @@ void print_data(const Response& response, ostream& out)
 void printResponses(const vector<Response>& responses, ostream& out)
 {
     for (const auto& response : responses) {
-        out << "Bus " << response.id << ": ";
+        out << "Bus " << response.bus_id << ": ";
         if (response.data) {
             out << response.data->stop_cnt << "stops on route, "
                 << response.data->unique_stop_cnt << "unique stops, "
@@ -84,29 +89,65 @@ void printResponses(const vector<Response>& responses, ostream& out)
     }
 }
 
-void AddBusRequest::process() const
+void AddBusRequest::process(RouteManager& route_mgr)
 {
+    Bus bus {bus_id, route_mgr.buildRoute(stop_names, route_type)};
+    route_mgr.addBus(move(bus));
+}
+
+Route::Type AddBusRequest::parseRouteType(string_view input)
+{
+    if (input.empty() || input[0] == '-') {
+        return Route::Type::LINE;
+    }
+    else if (input[0] == '>') {
+        return Route::Type::CIRCLE;
+    }
+    else {
+        throw runtime_error("Invalid route delimiter format: " + input[0]);
+    }
 }
 
 void AddBusRequest::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input));
-    coordinates.parseFromStr(input);
+    bus_id = strToNum<Id>(readToken(input, ":"));
+    input = strip_ws(input);     // note: this assumes leading whitespace, might not be there
+                                 // but FOR NOW we're fine even then
+
+    stop_names.emplace_back(readToken(input));    // assumes there's at least one stop
+    route_type = parseRouteType(input);
+
+    while (not input.empty()) {
+        input.remove_prefix(2);
+        stop_names.emplace_back(readToken(input));
+    }
+    if (route_type == Route::Type::CIRCLE 
+        && stop_names.front() != stop_names.back()) {
+        throw runtime_error("Invalid circle route, first and last must match");
+    }
 }
 
-void AddStopRequest::process() const
+
+void AddStopRequest::process(RouteManager& route_mgr)
 {
+    route_mgr.addStop(move(name), location);
 }
 
 void AddStopRequest::parseFrom(string_view input)
 {
+    name = readToken(input , ":");
+    location = geo::Coordinate::parseFromStr(input);
 }
 
-Response GetBusInfo::process() const
+
+Response GetBusInfo::process(RouteManager& route_mgr) const
 {
     Response response {bus_id};
-    // PLACEHOLDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    if (route_mgr.isTracking(bus_id)) {
+        response.data->route_len = route_mgr.getBusRouteLen(bus_id);
+        response.data->stop_cnt = route_mgr.getBusStopCount(bus_id);
+        response.data->unique_stop_cnt = route_mgr.getBusUniqueStopCount(bus_id);
+    }
     return response;
 }
 

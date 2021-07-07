@@ -4,6 +4,9 @@
 //                                                                                              //
 //==============================================================================================//
 
+#include "profile.h"
+#include "test_runner.h"
+#include "tests.h"
 #include "util.h"
 #include "geo.h"
 #include "Request.h"
@@ -12,11 +15,9 @@
 
 #include <iostream>
 #include <iomanip>
-
 using namespace std;
 
 //==============================================================================================//
-
 
 
 //==============================================================================================//
@@ -24,6 +25,9 @@ using namespace std;
 
 int main()
 {
+    TestRunner tr;
+    RUN_TEST(tr, test_stop_hash);
+
     setOutPrecision();
 
     const auto fill_requests  = readRequests<QueryType::MODIFY>(); // filling the DB

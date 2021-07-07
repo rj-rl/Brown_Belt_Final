@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <string_view>
+#include <tuple>		// for std::tie
+#include <functional>	// for std::hash
 
 namespace geo {
 
@@ -17,8 +19,26 @@ struct Coordinate {
 		, lon {lon}
 	{}
 	
-	void parseFromStr(std::string_view input);
-	//static_assert(std::is_arithmetic_v<Number>, "T is not arithmetic type (in Coordinate<T>)");
+	static Coordinate parseFromStr(std::string_view input);
+
+	bool operator == (const Coordinate& that) const
+	{
+		return std::tie(lat, lon) == std::tie(that.lat, that.lon);
+	}
+	struct Hasher {
+		size_t operator() (const Coordinate& c) const
+		{
+			constexpr size_t x = 2'946'901;
+			size_t a = std::hash<double> {}(c.lat);
+			size_t b = std::hash<double> {}(c.lon);
+			return a*x*x + b*x;
+		}
+	}; 
+	
+	friend std::ostream& operator << (std::ostream& out, const Coordinate& c)
+	{
+		return out << "(lat = " << c.lat << ", lon = " << c.lon << ")";
+	}
 };
 
 

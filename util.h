@@ -33,11 +33,13 @@ inline void setOutPrecision(size_t n = 6)
 std::pair<std::string_view, std::optional<std::string_view>> 
     splitTwoStrict (std::string_view s, std::string_view delimiter = " ");
 
-
 std::pair<std::string_view, std::string_view> 
     splitTwo(std::string_view s, std::string_view delimiter = " ");
 
 std::string_view readToken(std::string_view& s, std::string_view delimiter = " ");
+
+// strips all leading and trailing ws
+std::string_view strip_ws(std::string_view s);
 
 template <typename Number>
 Number strToNum(std::string_view str)
@@ -68,5 +70,3 @@ Number readNumberOnLine(std::istream& stream)
     std::getline(stream, dummy);
     return number;
 }
-
-

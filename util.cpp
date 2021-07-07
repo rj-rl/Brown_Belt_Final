@@ -27,3 +27,14 @@ string_view readToken(string_view& s, string_view delimiter)
     s = rhs;
     return lhs;
 }
+
+string_view strip_ws(string_view s)
+{
+    while (!s.empty() && isspace(s.front())) {
+        s.remove_prefix(1);
+    }
+    while (!s.empty() && isspace(s.back())) {
+        s.remove_suffix(1);
+    }
+    return s;
+}

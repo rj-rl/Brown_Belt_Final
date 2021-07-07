@@ -1,25 +1,34 @@
 #pragma once
 #include "Map.h"
 #include <vector>
+#include <unordered_map>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <optional>
 
-using Id = int;
+using Id = size_t;	// for bus ids
 
 class Bus {
 public:
-	Bus(Id id, std::vector<Stop> stops)	// take stops by value to store them
+	Bus(Id id = 0, Route route = {})	// take stops by value to store them
 		: id_ {id}
-		, stops_ {std::move(stops)}
+		, route_ {std::move(route)}
 	{}
 
-	int		stopCount() const { return stops_.size(); }
-	int		uniqueStopCount() const;
-	double	routeLen() const;
+	Id		id() const { return id_; }
+	size_t	stopCount() const;
+	size_t	uniqueStopCount() const;
+	double	routeLen(const Map& map) const;
+
+	bool operator < (const Bus& that) const
+	{
+		return this->id_ < that.id_;
+	}
 
 private:
-	Id					id_;
-	std::vector<Stop>	stops_;
+	Id		id_;
+	Route	route_;
 };
 
 
@@ -29,13 +38,14 @@ public:
 
 	void addBus(Bus bus)
 	{
-		buses_.push_back(std::move(bus));
+		buses_.emplace(bus.id(), std::move(bus));
 	}
 
-	Bus*		getBus(Id id);
-	const Bus*	getBus(Id id) const;
+	bool	   contains(Id bus_id) const;
+	Bus*       getBus(Id bus_id);
+	const Bus* getBus(Id bus_id) const;
 
 private:
-	std::vector<Bus> buses_;
+	std::unordered_map<Id, Bus> buses_;
 };
 

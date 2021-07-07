@@ -1,11 +1,38 @@
 #include "BusPark.h"
+#include "util.h"
+#include <string_view>
+using namespace std;
 
-int Bus::uniqueStopCount() const
+size_t Bus::stopCount() const
 {
-    return 0;
+    return route_.getStopCount();
 }
 
-double Bus::routeLen() const
+size_t Bus::uniqueStopCount() const
 {
-    return 0.0;
+    return route_.getUniqueStopCount();
+}
+
+double Bus::routeLen(const Map& map) const
+{
+    return route_.getLength(map);
+}
+
+bool BusPark::contains(Id bus_id) const
+{
+    return buses_.count(bus_id) > 0;
+}
+
+Bus* BusPark::getBus(Id bus_id)
+{
+    return contains(bus_id)
+        ? &buses_[bus_id]
+        : nullptr;
+}
+
+const Bus* BusPark::getBus(Id bus_id) const
+{
+    return contains(bus_id)
+        ? &buses_.at(bus_id)
+        : nullptr;
 }

@@ -2,6 +2,7 @@
 #include "util.h"
 #include "geo.h"
 #include "BusPark.h"
+#include "RouteManager.h"
 
 #include <memory>
 #include <string>
@@ -15,16 +16,16 @@
 
 struct Response {
     struct Data {
-        int     stop_cnt = 0;
-        int     unique_stop_cnt = 0;
+        size_t  stop_cnt = 0;
+        size_t  unique_stop_cnt = 0;
         double  route_len = 0.0;
     };
 
-    Id id = 0;
+    Id bus_id = 0;
     std::optional<Data> data = std::nullopt;
 
-    Response(Id id = -1)
-        : id {id}
+    Response(Id bus_id = -1)
+        : bus_id {bus_id}
     {}
 };
 
@@ -60,40 +61,44 @@ static const TypeTable STR_TO_QUERY_TYPE = {
 };
 
 
-
 template <typename ResultType>
 struct QueryRequest : Request {
     using Request::Request;
-    virtual ResultType process() const = 0;
+    virtual ResultType process(RouteManager& route_mgr) const = 0;
 };
 
 struct ModifyRequest : Request {
     using Request::Request;
-    virtual void process() const = 0;
+    virtual void process(RouteManager& route_mgr) = 0;
 };
 
 // CONCRETE TYPES BELOW
 
 struct AddBusRequest : ModifyRequest {
-    Id              bus_id;
-    geo::Coordinate coordinates;
-
+    Id                        bus_id;
+    std::vector<std::string>  stop_names;
+    Route::Type               route_type;
+        
     AddBusRequest()
         : ModifyRequest(Request::Type::ADD_BUS)
         , bus_id {}
-        , coordinates {}
+        , route_type {}
     {}
 
-    void process() const override;
+    void process(RouteManager& route_mgr) override;
     void parseFrom(std::string_view) override;
+    Route::Type parseRouteType(std::string_view);
 };
 
 struct AddStopRequest : ModifyRequest {
+    std::string     name;
+    geo::Coordinate location;
+
     AddStopRequest()
         : ModifyRequest(Request::Type::ADD_STOP)
     {}
 
-    void process() const override;
+    void process(RouteManager& route_mgr) override;
     void parseFrom(std::string_view) override;
 };
 
@@ -106,7 +111,7 @@ struct GetBusInfo : QueryRequest<Response> {
         , bus_id {}
     {}
 
-    Response process() const override;
+    Response process(RouteManager& route_mgr) const override;
     void parseFrom(std::string_view) override;
 };
 

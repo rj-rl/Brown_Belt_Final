@@ -6,10 +6,11 @@ using namespace std;
 
 namespace geo {
 
-void Coordinate::parseFromStr(std::string_view input)
+Coordinate Coordinate::parseFromStr(std::string_view input)
 {
-    lat = strToNum<double>(readToken(input, ", "));
-    lon = strToNum<double>(readToken(input));
+    auto lat = strToNum<double>(readToken(input, ", "));
+    auto lon = strToNum<double>(readToken(input));
+    return {lat, lon};
 }
 
 // haversine formula
