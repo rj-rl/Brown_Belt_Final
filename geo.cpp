@@ -2,40 +2,32 @@
 #include "util.h"
 
 #include <cmath>
-#include <charconv>
 #include <sstream>
 using namespace std;
-using std::from_chars;
 
 namespace geo {
 
 Coordinate Coordinate::parseFromStr(string_view input)
 {
-    input = strip_ws(input);
-    double lat = 0.0;
-    double lon = 0.0;
-
-    auto token = readToken(input, ", ");
-    auto err = from_chars(token.data(), token.data() + token.size(), lat);
-    if (err.ec != errc {}) {
-        stringstream msg;
-        msg << "Invalid cordinate format: " << token;
-        throw invalid_argument(msg.str());
-    }
-
-    token = readToken(input);
-    err = from_chars(token.data(), token.data() + token.size(), lon);
-    if (err.ec != errc {}) {
-        stringstream msg;
-        msg << "Invalid cordinate format: " << token;
-        throw invalid_argument(msg.str());
-    }
+    auto lat = strToNum<double>(readToken(input, ", "));
+    auto lon = strToNum<double>(readToken(input));
     return {lat, lon};
 }
 
 // haversine formula
 double distance(Coordinate punkt_a, Coordinate punkt_b)
 {
+    // recommended version:
+    //auto a_lat = degToRad(punkt_a.lat);
+    //auto a_lon = degToRad(punkt_a.lon);
+
+    //auto b_lat = degToRad(punkt_b.lat);
+    //auto b_lon = degToRad(punkt_b.lon);
+
+    //double a = sin(a_lat) * sin(b_lat) +
+    //    cos(a_lat) * cos(b_lat) * cos(a_lon - b_lon);
+    //double d = earth_r * acos(a);
+
 	auto d_lat = degToRad(punkt_a.lat - punkt_b.lat);   // latitude distance 
 	auto d_lon = degToRad(punkt_a.lon - punkt_b.lon);   // longitude distance
 

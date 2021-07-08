@@ -9,7 +9,6 @@
 #include <memory>
 #include <optional>
 #include <utility>
-#include <charconv>
 
 template <typename It>
 class Range {
@@ -45,15 +44,21 @@ std::string_view strip_ws(std::string_view s);
 template <typename Number>
 Number strToNum(std::string_view input)
 {
-    Number num {};
-    auto token = readToken(input);
-    auto err = std::from_chars(token.data(), token.data() + token.size(), num);
-    if (err.ec != std::errc {}) {
-        std::stringstream msg;
-        msg << "Invalid bus number format: " << token;
-        throw std::invalid_argument(msg.str());
+// use from_chars when available to git rid of string copy
+    size_t pos;
+    Number result;
+    if constexpr (std::is_integral_v<Number>) {
+        result = std::stoi(std::string(input), &pos);
     }
-    return num;
+    else {
+        result = std::stod(std::string(input), &pos);
+    }
+    if (pos != input.length()) {
+        std::stringstream error;
+        error << "string " << input << " contains " << (input.length() - pos) << " trailing chars";
+        throw std::invalid_argument(error.str());
+    }
+    return result;
 }
 
 template <typename Number>
