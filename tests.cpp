@@ -79,6 +79,8 @@ void test_main()
 	ASSERT_EQUAL(output.str(), correct_output);
 
 	// out of order requests
+	output.str("");
+	output.clear();
 	modify_requests = readRequests<RequestCategory::MODIFY>(input);
 	query_requests = readRequests<RequestCategory::READ>(input);
 	query_responses = processRequests(modify_requests, query_requests);

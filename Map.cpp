@@ -7,6 +7,7 @@ using namespace std;
 void Route::addStop(Stop stop)
 {
 	stops.push_back(move(stop));
+	unique_stop_names.emplace(stops.back().name);
 }
 
 double Route::getLength(const Map& map) const
@@ -30,17 +31,7 @@ size_t Route::getStopCount() const
 
 size_t Route::getUniqueStopCount() const
 {
-	if (type == Route::Type::CIRCLE) {
-		return (getStopCount() < 2)		// 0 and 1 stop routes are special cases for now
-			? getStopCount()
-			: getStopCount() - 1;
-	}
-	else if (type == Route::Type::LINE) {
-		return (getStopCount() + 1) / 2;
-	}
-	else {
-		throw runtime_error("unknown Route::Type in Route::getUniqueStopCount");
-	}
+	return unique_stop_names.size();
 }
 
 //========================================== MAP  ==============================================//

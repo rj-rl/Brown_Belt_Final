@@ -23,11 +23,11 @@ struct Response {
         Data() = default;
     };
 
-    Id bus_id = 0;
+    Id bus_id = {};
     std::optional<Data> data = std::nullopt;
 
-    Response(Id bus_id = -1)
-        : bus_id {bus_id}
+    Response(Id bus_id = {})
+        : bus_id {move(bus_id)}
     {}
 };
 
@@ -117,6 +117,16 @@ struct GetBusInfo : QueryRequest<Response> {
     void parseFrom(std::string_view) override;
 };
 
+//================================== REQUESTS CONTAINER ========================================//
+
+struct RequestsContainer {
+    std::vector<RequestHolder> fill_map_requests;
+    std::vector<RequestHolder> fill_bus_park_requests;
+    std::vector<RequestHolder> queries;
+
+    RequestsContainer() = default;
+};
+
 //======================================= UTILITY ==============================================//
 // Determines if a request is a query to DB
 enum class RequestCategory {
@@ -130,25 +140,31 @@ std::optional<Request::Type> convertRequestTypeFromString(
 RequestHolder parseRequest(std::string_view request_str, RequestCategory category);
 
 template <RequestCategory category>
-std::vector<RequestHolder> readRequests(std::istream& in = std::cin)
+RequestsContainer readRequests(std::istream& in = std::cin)
 {
     const size_t request_count = readNumberOnLine<size_t>(in);
-
-    std::vector<RequestHolder> requests;
-    requests.reserve(request_count);
+    RequestsContainer requests;
 
     for (size_t i = 0; i < request_count; ++i) {
         std::string request_str;
         std::getline(in, request_str);
         if (auto request = parseRequest(request_str, category)) {
-            requests.push_back(move(request));
+            if (request->type == Request::Type::ADD_BUS) {
+                requests.fill_bus_park_requests.push_back(move(request));
+            }
+            else if (request->type == Request::Type::ADD_STOP) {
+                requests.fill_map_requests.push_back(move(request));
+            }
+            else {
+                requests.queries.push_back(move(request));
+            }
         }
     }
     return requests;
 }
 
 std::vector<Response> processRequests(
-    const std::vector<RequestHolder>& modify_requests,
-    const std::vector<RequestHolder>& query_requests);
+    const RequestsContainer& modify_requests,
+    const RequestsContainer& query_requests);
 
 void printResponses(const std::vector<Response>&, std::ostream& stream = std::cout);

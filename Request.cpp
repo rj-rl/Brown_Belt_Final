@@ -2,9 +2,8 @@
 #include "util.h"
 #include <stdexcept>
 #include <sstream>
-#include <charconv>
+#include <vector>
 using namespace std;
-using std::from_chars;
 
 //======================================== UTILITY =============================================//
 
@@ -74,8 +73,8 @@ RequestHolder parseRequest(string_view request_str, RequestCategory category)
 }
 
 vector<Response> processRequests(
-    const vector<RequestHolder>& modify_requests,
-    const vector<RequestHolder>& query_requests)
+    const RequestsContainer& modify_requests,
+    const RequestsContainer& query_requests)
 {
     Map map;
     BusPark bus_park;
@@ -83,18 +82,21 @@ vector<Response> processRequests(
     vector<Response> result;
 
         // requests without return values (aka ModifyRequests) go here
-    for (const auto& request_holder : modify_requests) {
+    for (const auto& request_holder : modify_requests.fill_map_requests) {
+        auto& request = static_cast<ModifyRequest&>(*request_holder);
+        request.process(manager);
+    }
+    for (const auto& request_holder : modify_requests.fill_bus_park_requests) {
         auto& request = static_cast<ModifyRequest&>(*request_holder);
         request.process(manager);
     }
 
-    for (const auto& request_holder : query_requests) {
+    for (const auto& request_holder : query_requests.queries) {
         if (request_holder->type == Request::Type::GET_BUS_INFO) {
             const auto& request = static_cast<const GetBusInfo&>(*request_holder);
             result.push_back(request.process(manager));
         }
     }
-
     return result;
 }
 
@@ -102,7 +104,7 @@ vector<Response> processRequests(
 
 void AddBusRequest::process(RouteManager& route_mgr)
 {
-    Bus bus {bus_id, route_mgr.buildRoute(stop_names, route_type)};
+    Bus bus {move(bus_id), route_mgr.buildRoute(stop_names, route_type)};
     route_mgr.addBus(move(bus));
 }
 
@@ -129,12 +131,9 @@ void AddBusRequest::parseRouteType(string_view input, string* delimiter)
 
 void AddBusRequest::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input, ": "));
+    bus_id = readToken(input, ": ");
     string delimiter;
     parseRouteType(input, &delimiter);
-
-    stop_names.emplace_back(readToken(input));    // assumes there's at least one stop
-    route_type = parseRouteType(input);
 
     while (not input.empty()) {
         stop_names.emplace_back(readToken(input, delimiter));
@@ -172,8 +171,8 @@ Response GetBusInfo::process(RouteManager& route_mgr) const
     }
     return response;
 }
-    bus_id = strToNum<Id>(input);
+
 void GetBusInfo::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input));
+    bus_id = input;
 }

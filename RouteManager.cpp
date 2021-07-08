@@ -20,7 +20,7 @@ Route RouteManager::buildRoute(const vector<string>& stops, Route::Type type) co
 	return map_.buildRouteCirc(stops);
 }
 
-double RouteManager::getBusRouteLen(Id bus_id) const
+double RouteManager::getBusRouteLen(const Id& bus_id) const
 {
 	Bus* bus = bus_park_.getBus(bus_id);
 		// this should never happen, we only call this function when 'bus_id' is tracked
@@ -28,7 +28,7 @@ double RouteManager::getBusRouteLen(Id bus_id) const
 	return bus->routeLen(map_);
 }
 
-size_t RouteManager::getBusStopCount(Id bus_id) const
+size_t RouteManager::getBusStopCount(const Id& bus_id) const
 {
 	Bus* bus = bus_park_.getBus(bus_id);
 		// this should never happen, we only call this function when 'bus_id' is tracked
@@ -36,7 +36,7 @@ size_t RouteManager::getBusStopCount(Id bus_id) const
 	return bus->stopCount();
 }
 
-size_t RouteManager::getBusUniqueStopCount(Id bus_id) const
+size_t RouteManager::getBusUniqueStopCount(const Id& bus_id) const
 {
 	Bus* bus = bus_park_.getBus(bus_id);
 			// this should never happen, we only call this function when 'bus_id' is tracked
@@ -44,17 +44,17 @@ size_t RouteManager::getBusUniqueStopCount(Id bus_id) const
 	return bus->uniqueStopCount();
 }
 
-const Bus* RouteManager::getBus(Id bus_id) const
+const Bus* RouteManager::getBus(const Id& bus_id) const
 {
 	return bus_park_.getBus(bus_id);
 }
 
-Bus* RouteManager::getBus(Id bus_id)
+Bus* RouteManager::getBus(const Id& bus_id)
 {
 	return bus_park_.getBus(bus_id);
 }
 
-bool RouteManager::isTracking(Id bus_id) const
+bool RouteManager::isTracking(const Id& bus_id) const
 {
 	return bus_park_.contains(bus_id);
 }

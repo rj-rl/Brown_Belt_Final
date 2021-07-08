@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 #include <unordered_map>
+#include <unordered_set>
 #include <optional>
 
 struct Stop {
@@ -34,9 +35,10 @@ struct Route {
 		LINE,
 	};
 
-	Type							type;
-	std::vector<Stop>				stops;
-	mutable std::optional<double>	cached_length;
+	Type								 type;
+	std::vector<Stop>					 stops;
+	std::unordered_set<std::string_view> unique_stop_names;
+	mutable std::optional<double>		 cached_length;
 
 	void addStop(Stop);
 	double getLength(const Map& map) const;
