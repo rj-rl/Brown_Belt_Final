@@ -2,7 +2,59 @@
 #include "util.h"
 #include <stdexcept>
 #include <sstream>
+#include <charconv>
 using namespace std;
+using std::from_chars;
+
+//======================================== UTILITY =============================================//
+
+// formats and prints data for a single request response
+void print_data(const Response& response, ostream& out)
+{
+    out << response.data->stop_cnt << " stops on route, "
+        << response.data->unique_stop_cnt << " unique stops, "
+        << response.data->route_len << " route length";
+}
+
+void printResponses(const vector<Response>& responses, ostream& out)
+{
+    for (const auto& response : responses) {
+        out << "Bus " << response.bus_id << ": ";
+        if (response.data) {
+            print_data(response, out);
+            out << '\n';
+        }
+        else {
+            out << "not found\n";
+        }
+    }
+}
+
+Id parseBusId(string_view input)
+{
+    Id bus_id;
+    auto token = readToken(input);
+    auto err = from_chars(token.data(), token.data() + token.size(), bus_id);
+    if (err.ec != errc {}) {
+        stringstream msg;
+        msg << "Invalid bus number format: " << token;
+        throw invalid_argument(msg.str());
+    }
+    return bus_id;
+}
+
+optional<Request::Type> convertRequestTypeFromString(string_view type_str, const TypeTable& table)
+{
+    if (const auto it = table.find(type_str);
+        it != table.end()) {
+        return it->second;
+    }
+    else {
+        return nullopt;
+    }
+}
+
+//=================================== PARSE AND PROCESS ========================================//
 
 RequestHolder Request::create(Request::Type type)
 {
@@ -18,22 +70,11 @@ RequestHolder Request::create(Request::Type type)
     }
 }
 
-optional<Request::Type> convertRequestTypeFromString(string_view type_str, const TypeTable& table)
+RequestHolder parseRequest(string_view request_str, RequestCategory category)
 {
-    if (const auto it = table.find(type_str);
-        it != table.end()) {
-        return it->second;
-    }
-    else {
-        return nullopt;
-    }
-}
-
-RequestHolder parseRequest(string_view request_str, QueryType is_query)
-{
-    const TypeTable& table = (is_query == QueryType::READ)
+    const TypeTable& table = (category == RequestCategory::READ)
         ? STR_TO_QUERY_TYPE
-        : STR_TO_REQUEST_TYPE;
+        : STR_TO_MODIFYING_REQUEST_TYPE;
     const auto request_type = convertRequestTypeFromString(readToken(request_str), table);
     if (!request_type) {
         return nullptr;
@@ -70,27 +111,7 @@ vector<Response> processRequests(
     return result;
 }
 
-// formats and prints data for a single request response
-void print_data(const Response& response, ostream& out)
-{
-    out << response.data->stop_cnt << " stops on route, "
-        << response.data->unique_stop_cnt << " unique stops, "
-        << response.data->route_len << " route length";
-}
-
-void printResponses(const vector<Response>& responses, ostream& out)
-{
-    for (const auto& response : responses) {
-        out << "Bus " << response.bus_id << ": ";
-        if (response.data) {
-            print_data(response, out);
-            out << '\n';
-        }
-        else {
-            out << "not found\n";
-        }
-    }
-}
+//===================================== AddBusRequest ==========================================//
 
 void AddBusRequest::process(RouteManager& route_mgr)
 {
@@ -98,40 +119,44 @@ void AddBusRequest::process(RouteManager& route_mgr)
     route_mgr.addBus(move(bus));
 }
 
-Route::Type AddBusRequest::parseRouteType(string_view input)
+void AddBusRequest::parseRouteType(string_view input, string* delimiter)
 {
-    if (input.empty() || input[0] == '-') {
-        return Route::Type::LINE;
+    size_t pos = 0u;
+    pos = input.find(" > ");
+    if (pos < input.npos) {
+        route_type = Route::Type::CIRCLE;
+        *delimiter = " > ";
+        return;
     }
-    else if (input[0] == '>') {
-        return Route::Type::CIRCLE;
+    else if (pos = input.find(" - "); pos < input.npos) {
+        route_type = Route::Type::LINE;
+        *delimiter = " - ";
+        return;
     }
     else {
-        stringstream ss;
-        ss << "Invalid route delimiter format: " << input[0];
-        throw runtime_error(ss.str());
+        stringstream msg;
+        msg << "Invalid route delimiter format: " << input;
+        throw runtime_error(msg.str());
     }
 }
 
 void AddBusRequest::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input, ":"));
-    input = strip_ws(input);     // note: this assumes leading whitespace, might not be there
-                                 // but FOR NOW we're fine even then
-
-    stop_names.emplace_back(readToken(input));    // assumes there's at least one stop
-    route_type = parseRouteType(input);
+    bus_id = parseBusId(readToken(input, ": "));
+    string delimiter;
+    parseRouteType(input, &delimiter);
 
     while (not input.empty()) {
-        input.remove_prefix(2);
-        stop_names.emplace_back(readToken(input));
+        stop_names.emplace_back(readToken(input, delimiter));
     }
-    if (route_type == Route::Type::CIRCLE 
+
+    if (route_type == Route::Type::CIRCLE
         && stop_names.front() != stop_names.back()) {
         throw runtime_error("Invalid circle route, first and last must match");
     }
 }
 
+//===================================== AddStopRequest =========================================//
 
 void AddStopRequest::process(RouteManager& route_mgr)
 {
@@ -140,10 +165,11 @@ void AddStopRequest::process(RouteManager& route_mgr)
 
 void AddStopRequest::parseFrom(string_view input)
 {
-    name = readToken(input , ":");
+    name = readToken(input , ": ");
     location = geo::Coordinate::parseFromStr(input);
 }
 
+//======================================= GetBusInfo ===========================================//
 
 Response GetBusInfo::process(RouteManager& route_mgr) const
 {
@@ -159,5 +185,5 @@ Response GetBusInfo::process(RouteManager& route_mgr) const
 
 void GetBusInfo::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input));
+    bus_id = parseBusId(input);
 }

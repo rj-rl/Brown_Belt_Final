@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <charconv>
 
 template <typename It>
 class Range {
@@ -64,7 +65,7 @@ Number strToNum(std::string_view str)
 template <typename Number>
 Number readNumberOnLine(std::istream& stream)
 {
-    Number number;
+    Number number {};
     stream >> number;
     std::string dummy;
     std::getline(stream, dummy);

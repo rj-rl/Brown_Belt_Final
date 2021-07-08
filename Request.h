@@ -53,7 +53,7 @@ struct Request {
 
 using TypeTable = std::unordered_map<std::string_view, Request::Type>;
 
-static const TypeTable STR_TO_REQUEST_TYPE = {
+static const TypeTable STR_TO_MODIFYING_REQUEST_TYPE = {
     {"Stop", Request::Type::ADD_STOP},
     {"Bus", Request::Type::ADD_BUS},
 };
@@ -89,7 +89,7 @@ struct AddBusRequest : ModifyRequest {
 
     void process(RouteManager& route_mgr) override;
     void parseFrom(std::string_view) override;
-    Route::Type parseRouteType(std::string_view);
+    void parseRouteType(std::string_view input, std::string* delimiter);
 };
 
 struct AddStopRequest : ModifyRequest {
@@ -119,7 +119,7 @@ struct GetBusInfo : QueryRequest<Response> {
 
 //======================================= UTILITY ==============================================//
 // Determines if a request is a query to DB
-enum class QueryType {
+enum class RequestCategory {
     MODIFY,
     READ,
 };
@@ -127,9 +127,9 @@ enum class QueryType {
 std::optional<Request::Type> convertRequestTypeFromString(
     std::string_view type_str, const TypeTable& table);
 
-RequestHolder parseRequest(std::string_view request_str, QueryType is_query);
+RequestHolder parseRequest(std::string_view request_str, RequestCategory category);
 
-template <QueryType is_query>
+template <RequestCategory category>
 std::vector<RequestHolder> readRequests(std::istream& in = std::cin)
 {
     const size_t request_count = readNumberOnLine<size_t>(in);
@@ -140,7 +140,7 @@ std::vector<RequestHolder> readRequests(std::istream& in = std::cin)
     for (size_t i = 0; i < request_count; ++i) {
         std::string request_str;
         std::getline(in, request_str);
-        if (auto request = parseRequest(request_str, is_query)) {
+        if (auto request = parseRequest(request_str, category)) {
             requests.push_back(move(request));
         }
     }

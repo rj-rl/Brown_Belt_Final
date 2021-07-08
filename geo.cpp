@@ -2,14 +2,34 @@
 #include "util.h"
 
 #include <cmath>
+#include <charconv>
+#include <sstream>
 using namespace std;
+using std::from_chars;
 
 namespace geo {
 
-Coordinate Coordinate::parseFromStr(std::string_view input)
+Coordinate Coordinate::parseFromStr(string_view input)
 {
-    auto lat = strToNum<double>(readToken(input, ", "));
-    auto lon = strToNum<double>(readToken(input));
+    input = strip_ws(input);
+    double lat = 0.0;
+    double lon = 0.0;
+
+    auto token = readToken(input, ", ");
+    auto err = from_chars(token.data(), token.data() + token.size(), lat);
+    if (err.ec != errc {}) {
+        stringstream msg;
+        msg << "Invalid cordinate format: " << token;
+        throw invalid_argument(msg.str());
+    }
+
+    token = readToken(input);
+    err = from_chars(token.data(), token.data() + token.size(), lon);
+    if (err.ec != errc {}) {
+        stringstream msg;
+        msg << "Invalid cordinate format: " << token;
+        throw invalid_argument(msg.str());
+    }
     return {lat, lon};
 }
 
