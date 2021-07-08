@@ -133,6 +133,9 @@ void AddBusRequest::parseFrom(string_view input)
     string delimiter;
     parseRouteType(input, &delimiter);
 
+    stop_names.emplace_back(readToken(input));    // assumes there's at least one stop
+    route_type = parseRouteType(input);
+
     while (not input.empty()) {
         stop_names.emplace_back(readToken(input, delimiter));
     }
@@ -169,8 +172,8 @@ Response GetBusInfo::process(RouteManager& route_mgr) const
     }
     return response;
 }
-
+    bus_id = strToNum<Id>(input);
 void GetBusInfo::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(input);
+    bus_id = strToNum<Id>(readToken(input));
 }
