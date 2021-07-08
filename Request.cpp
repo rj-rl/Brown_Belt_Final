@@ -97,7 +97,6 @@ vector<Response> processRequests(
             result.push_back(request.process(manager));
         }
     }
-
     return result;
 }
 
@@ -105,7 +104,7 @@ vector<Response> processRequests(
 
 void AddBusRequest::process(RouteManager& route_mgr)
 {
-    Bus bus {bus_id, route_mgr.buildRoute(stop_names, route_type)};
+    Bus bus {move(bus_id), route_mgr.buildRoute(stop_names, route_type)};
     route_mgr.addBus(move(bus));
 }
 
@@ -132,7 +131,7 @@ void AddBusRequest::parseRouteType(string_view input, string* delimiter)
 
 void AddBusRequest::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input, ": "));
+    bus_id = readToken(input, ": ");
     string delimiter;
     parseRouteType(input, &delimiter);
 
@@ -175,5 +174,5 @@ Response GetBusInfo::process(RouteManager& route_mgr) const
 
 void GetBusInfo::parseFrom(string_view input)
 {
-    bus_id = strToNum<Id>(readToken(input));
+    bus_id = input;
 }

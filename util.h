@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <stdexcept>
 
 template <typename It>
 class Range {

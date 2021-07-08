@@ -23,11 +23,11 @@ struct Response {
         Data() = default;
     };
 
-    Id bus_id = 0;
+    Id bus_id = {};
     std::optional<Data> data = std::nullopt;
 
-    Response(Id bus_id = -1)
-        : bus_id {bus_id}
+    Response(Id bus_id = {})
+        : bus_id {move(bus_id)}
     {}
 };
 
