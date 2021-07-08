@@ -31,7 +31,9 @@ size_t Route::getStopCount() const
 size_t Route::getUniqueStopCount() const
 {
 	if (type == Route::Type::CIRCLE) {
-		return min(0u, getStopCount() - 1);	// in case there's 0 stops, so (0-1) doesn't overflow
+		return (getStopCount() < 2)		// 0 and 1 stop routes are special cases for now
+			? getStopCount()
+			: getStopCount() - 1;
 	}
 	else if (type == Route::Type::LINE) {
 		return (getStopCount() + 1) / 2;

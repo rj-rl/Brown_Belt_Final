@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <charconv>
 
 template <typename It>
 class Range {
@@ -42,29 +43,23 @@ std::string_view readToken(std::string_view& s, std::string_view delimiter = " "
 std::string_view strip_ws(std::string_view s);
 
 template <typename Number>
-Number strToNum(std::string_view str)
+Number strToNum(std::string_view input)
 {
-// use from_chars when available to git rid of string copy
-    size_t pos;
-    Number result;
-    if constexpr (std::is_integral_v<Number>) {
-        result = std::stoi(std::string(str), &pos);
+    Number num {};
+    auto token = readToken(input);
+    auto err = std::from_chars(token.data(), token.data() + token.size(), num);
+    if (err.ec != std::errc {}) {
+        std::stringstream msg;
+        msg << "Invalid bus number format: " << token;
+        throw std::invalid_argument(msg.str());
     }
-    else {
-        result = std::stod(std::string(str), &pos);
-    }
-    if (pos != str.length()) {
-        std::stringstream error;
-        error << "string " << str << " contains " << (str.length() - pos) << " trailing chars";
-        throw std::invalid_argument(error.str());
-    }
-    return result;
+    return num;
 }
 
 template <typename Number>
 Number readNumberOnLine(std::istream& stream)
 {
-    Number number;
+    Number number {};
     stream >> number;
     std::string dummy;
     std::getline(stream, dummy);
