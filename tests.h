@@ -5,4 +5,6 @@ void test_stop_hash();
 
 void test_from_chars();
 
-void test_main();
+void test_basic_A();
+
+void test_basic_B();

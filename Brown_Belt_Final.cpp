@@ -10,6 +10,7 @@
 #include "util.h"
 #include "geo.h"
 #include "Request.h"
+#include "Response.h"
 #include "Map.h"
 #include "BusPark.h"
 
@@ -28,7 +29,8 @@ int main()
     //TestRunner tr;
     //RUN_TEST(tr, test_from_chars);
     //RUN_TEST(tr, test_stop_hash);
-    //RUN_TEST(tr, test_main);
+    //RUN_TEST(tr, test_basic_A);
+    //RUN_TEST(tr, test_basic_B);
 
     setOutPrecision();
 

@@ -60,7 +60,7 @@ void test_from_chars()
 	ASSERT_EQUAL(d_ws_noisy_converted, result);
 }
 
-void test_main()
+void test_basic_A()
 {
 	string correct_output =
 		R"(Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length)""\n"
@@ -84,6 +84,27 @@ void test_main()
 	modify_requests = readRequests<RequestCategory::MODIFY>(input);
 	query_requests = readRequests<RequestCategory::READ>(input);
 	query_responses = processRequests(modify_requests, query_requests);
+	printResponses(query_responses, output);
+	ASSERT_EQUAL(output.str(), correct_output);
+}
+
+void test_basic_B()
+{
+	string correct_output =
+		R"(Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length)""\n"
+		R"(Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length)""\n"
+		R"(Bus 751: not found)""\n"
+		R"(Stop Samara: not found)""\n"
+		R"(Stop Prazhskaya: no buses)""\n"
+		R"(Stop Biryulyovo Zapadnoye: buses 256 828)""\n";
+
+	setOutPrecision();
+	ifstream input("Tests/test_basic_B.txt");
+	ostringstream output;
+
+	auto modify_requests = readRequests<RequestCategory::MODIFY>(input);
+	auto query_requests = readRequests<RequestCategory::READ>(input);
+	auto query_responses = processRequests(modify_requests, query_requests);
 	printResponses(query_responses, output);
 	ASSERT_EQUAL(output.str(), correct_output);
 }

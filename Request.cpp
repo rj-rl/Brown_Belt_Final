@@ -1,31 +1,19 @@
 #include "Request.h"
+#include "Response.h"
 #include "util.h"
 #include <stdexcept>
 #include <sstream>
 #include <vector>
+#include <utility>
 using namespace std;
 
 //======================================== UTILITY =============================================//
 
-// formats and prints data for a single request response
-void print_data(const Response& response, ostream& out)
-{
-    out << response.data->stop_cnt << " stops on route, "
-        << response.data->unique_stop_cnt << " unique stops, "
-        << response.data->route_len << " route length";
-}
-
-void printResponses(const vector<Response>& responses, ostream& out)
+void printResponses(const vector<ResponseHolder>& responses, ostream& out)
 {
     for (const auto& response : responses) {
-        out << "Bus " << response.bus_id << ": ";
-        if (response.data) {
-            print_data(response, out);
-            out << '\n';
-        }
-        else {
-            out << "not found\n";
-        }
+        response->print(out);
+        out << '\n';
     }
 }
 
@@ -51,6 +39,8 @@ RequestHolder Request::create(Request::Type type)
         return make_unique<AddStopRequest>();
     case Request::Type::GET_BUS_INFO:
         return make_unique<GetBusInfo>();
+    case Request::Type::GET_STOP_INFO:
+        return make_unique<GetStopInfo>();
     default:
         return nullptr;
     }
@@ -72,14 +62,14 @@ RequestHolder parseRequest(string_view request_str, RequestCategory category)
     return request;
 }
 
-vector<Response> processRequests(
+vector<ResponseHolder> processRequests(
     const RequestsContainer& modify_requests,
     const RequestsContainer& query_requests)
 {
     Map map;
     BusPark bus_park;
     RouteManager manager(map, bus_park);
-    vector<Response> result;
+    vector<ResponseHolder> result;
 
         // requests without return values (aka ModifyRequests) go here
     for (const auto& request_holder : modify_requests.fill_map_requests) {
@@ -94,6 +84,10 @@ vector<Response> processRequests(
     for (const auto& request_holder : query_requests.queries) {
         if (request_holder->type == Request::Type::GET_BUS_INFO) {
             const auto& request = static_cast<const GetBusInfo&>(*request_holder);
+            result.push_back(request.process(manager));
+        }
+        if (request_holder->type == Request::Type::GET_STOP_INFO) {
+            const auto& request = static_cast<const GetStopInfo&>(*request_holder);
             result.push_back(request.process(manager));
         }
     }
@@ -160,14 +154,18 @@ void AddStopRequest::parseFrom(string_view input)
 
 //======================================= GetBusInfo ===========================================//
 
-Response GetBusInfo::process(RouteManager& route_mgr) const
+ResponseHolder GetBusInfo::process(RouteManager& route_mgr) const
 {
-    Response response {bus_id};
+    ResponseHolder response = Response::create(Response::Type::BUS_INFO);
+    auto& concrete_response = static_cast<BusInfoResponse&>(*response);
+
+    concrete_response.set_bus_id(bus_id);
     if (route_mgr.isTracking(bus_id)) {
-        response.data = Response::Data();
-        response.data->stop_cnt = route_mgr.getBusStopCount(bus_id);
-        response.data->unique_stop_cnt = route_mgr.getBusUniqueStopCount(bus_id);
-        response.data->route_len = route_mgr.getBusRouteLen(bus_id);
+        auto data = BusInfoResponse::Data();
+        data.stop_cnt = route_mgr.getBusStopCount(bus_id);
+        data.unique_stop_cnt = route_mgr.getBusUniqueStopCount(bus_id);
+        data.route_len = route_mgr.getBusRouteLen(bus_id);
+        concrete_response.set_data(data);
     }
     return response;
 }
@@ -175,4 +173,27 @@ Response GetBusInfo::process(RouteManager& route_mgr) const
 void GetBusInfo::parseFrom(string_view input)
 {
     bus_id = input;
+}
+
+//======================================= GetStopInfo ===========================================//
+
+ResponseHolder GetStopInfo::process(RouteManager& route_mgr) const
+{
+    ResponseHolder response = Response::create(Response::Type::STOP_INFO);
+    auto& concrete_response = static_cast<StopInfoResponse&>(*response);
+
+    concrete_response.set_stop_id(stop_id);
+    if (route_mgr.isMapping(stop_id)) {
+        vector<string> bus_list (
+            route_mgr.getStopBusList(stop_id)->begin(),
+            route_mgr.getStopBusList(stop_id)->end()
+        );
+        concrete_response.set_data(move(bus_list));
+    }
+    return response;
+}
+
+void GetStopInfo::parseFrom(string_view input)
+{
+    stop_id = input;
 }
