@@ -20,7 +20,8 @@ void BusInfoResponse::print(std::ostream& out) const
     if (data) {
         out << data->stop_cnt << " stops on route, "
             << data->unique_stop_cnt << " unique stops, "
-            << data->route_len << " route length";
+            << data->route_len << " route length, "
+            << data->curvature << " curvature";
     }
     else {
         out << "not found";

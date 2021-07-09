@@ -22,19 +22,7 @@
 #include <charconv>
 using namespace std;
 
-void test_stop_hash()
-{
-	unordered_set<Stop, Stop::Hasher> stops;
-	Stop one("Kek", {1.1, 2.2});
-	Stop another("Kek", {9.9, 9.9});
-
-	stops.insert(one);
-	stops.insert(another);
-	ASSERT_EQUAL(stops.find(Stop("Kek"))->location, one.location);
-}
-
-// In the end: no whitespace, no noise allowed, string must only contain a valid
-// representation of a number
+// In the end: no leading whitespace allowed
 void test_from_chars()
 {
 	double result = 42.69;
@@ -63,8 +51,8 @@ void test_from_chars()
 void test_basic_A()
 {
 	string correct_output =
-		R"(Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length)""\n"
-		R"(Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length)""\n"
+		R"(Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length, 1 curvature)""\n"
+		R"(Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length, 1 curvature)""\n"
 		R"(Bus 751: not found)""\n";
 
 	setOutPrecision();
@@ -91,8 +79,8 @@ void test_basic_A()
 void test_basic_B()
 {
 	string correct_output =
-		R"(Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length)""\n"
-		R"(Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length)""\n"
+		R"(Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length, 1 curvature)""\n"
+		R"(Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length, 1 curvature)""\n"
 		R"(Bus 751: not found)""\n"
 		R"(Stop Samara: not found)""\n"
 		R"(Stop Prazhskaya: no buses)""\n"

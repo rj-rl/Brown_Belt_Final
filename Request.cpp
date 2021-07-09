@@ -165,6 +165,7 @@ ResponseHolder GetBusInfo::process(RouteManager& route_mgr) const
         data.stop_cnt = route_mgr.getBusStopCount(bus_id);
         data.unique_stop_cnt = route_mgr.getBusUniqueStopCount(bus_id);
         data.route_len = route_mgr.getBusRouteLen(bus_id);
+        data.curvature = route_mgr.getBusRouteCurvature(bus_id);
         concrete_response.set_data(data);
     }
     return response;

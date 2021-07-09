@@ -5,7 +5,7 @@
 #include <string_view>
 using namespace std;
 
-void RouteManager::addStop(string name, geo::Coordinate location)
+void RouteManager::addStop(StopId name, geo::Coordinate location)
 {
 	map_.addStop(move(name), location);
 }
@@ -19,7 +19,7 @@ void RouteManager::addBus(Bus bus)
 	}
 }
 
-Route RouteManager::buildRoute(const vector<string>& stops, Route::Type type) const
+Route RouteManager::buildRoute(const vector<StopId>& stops, Route::Type type) const
 {
 	if (type == Route::Type::LINE) {
 		return map_.buildRouteLine(stops);
@@ -33,6 +33,11 @@ double RouteManager::getBusRouteLen(const BusId& bus_id) const
 		// this should never happen, we only call this function when 'bus_id' is tracked
 	if (not bus) throw runtime_error("BusPark::getBus returned nullptr");
 	return bus->routeLen(map_);
+}
+
+double RouteManager::getBusRouteCurvature(const BusId& bus_id) const
+{
+	return 1.0;	// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }
 
 size_t RouteManager::getBusStopCount(const BusId& bus_id) const
