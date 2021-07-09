@@ -3,6 +3,7 @@
 #include "geo.h"
 #include "BusPark.h"
 #include "RouteManager.h"
+#include "Response.h"
 
 #include <memory>
 #include <string>
@@ -11,25 +12,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <optional>
-
-//======================================= RESPONSE =============================================//
-
-struct Response {
-    struct Data {
-        size_t  stop_cnt = 0;
-        size_t  unique_stop_cnt = 0;
-        double  route_len = 0.0;
-
-        Data() = default;
-    };
-
-    Id bus_id = {};
-    std::optional<Data> data = std::nullopt;
-
-    Response(Id bus_id = {})
-        : bus_id {move(bus_id)}
-    {}
-};
 
 //======================================= REQUESTS =============================================//
 
@@ -41,6 +23,7 @@ struct Request {
         ADD_STOP,
         ADD_BUS,
         GET_BUS_INFO,
+        GET_STOP_INFO,
     };
 
     Request(Type type) : type(type) {}
@@ -60,6 +43,7 @@ static const TypeTable STR_TO_MODIFYING_REQUEST_TYPE = {
 
 static const TypeTable STR_TO_QUERY_TYPE = {
     {"Bus", Request::Type::GET_BUS_INFO},
+    {"Stop", Request::Type::GET_STOP_INFO},
 };
 
 
@@ -77,7 +61,7 @@ struct ModifyRequest : Request {
 // CONCRETE TYPES BELOW
 
 struct AddBusRequest : ModifyRequest {
-    Id                        bus_id;
+    BusId                     bus_id;
     std::vector<std::string>  stop_names;
     Route::Type               route_type;
         
@@ -105,15 +89,28 @@ struct AddStopRequest : ModifyRequest {
 };
 
 
-struct GetBusInfo : QueryRequest<Response> {
-    Id bus_id;
+struct GetBusInfo : QueryRequest<ResponseHolder> {
+    BusId bus_id;
 
     GetBusInfo()
         : QueryRequest(Request::Type::GET_BUS_INFO)
         , bus_id {}
     {}
 
-    Response process(RouteManager& route_mgr) const override;
+    ResponseHolder process(RouteManager& route_mgr) const override;
+    void parseFrom(std::string_view) override;
+};
+
+
+struct GetStopInfo : QueryRequest<ResponseHolder> {
+    StopId stop_id;
+
+    GetStopInfo()
+        : QueryRequest(Request::Type::GET_STOP_INFO)
+        , stop_id {}
+    {}
+
+    ResponseHolder process(RouteManager& route_mgr) const override;
     void parseFrom(std::string_view) override;
 };
 
@@ -163,8 +160,8 @@ RequestsContainer readRequests(std::istream& in = std::cin)
     return requests;
 }
 
-std::vector<Response> processRequests(
+std::vector<ResponseHolder> processRequests(
     const RequestsContainer& modify_requests,
     const RequestsContainer& query_requests);
 
-void printResponses(const std::vector<Response>&, std::ostream& stream = std::cout);
+void printResponses(const std::vector<ResponseHolder>&, std::ostream& stream = std::cout);

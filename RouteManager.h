@@ -1,10 +1,8 @@
 #pragma once
 #include "Map.h"
 #include "BusPark.h"
-#include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <functional>		// for std::hash
+#include <string>
+#include <vector>
 
 class RouteManager {
 public:
@@ -16,15 +14,22 @@ public:
 	void	addStop(std::string name, geo::Coordinate location);
 	void	addBus(Bus bus);
 	Route	buildRoute(const std::vector<std::string>& stop_names, Route::Type type) const;
-	double	getBusRouteLen(const Id& bus_id) const;
-	size_t	getBusStopCount(const Id& bus_id) const;
-	size_t	getBusUniqueStopCount(const Id& bus_id) const;
+	// bus query logic
+	double	getBusRouteLen(const BusId& bus_id) const;
+	size_t	getBusStopCount(const BusId& bus_id) const;
+	size_t	getBusUniqueStopCount(const BusId& bus_id) const;
+	// stop query logic
+	const BusList* getStopBusList(const StopId& stop_id) const;
 
-	const Bus*  getBus(const Id& bus_id) const;
-	Bus*		getBus(const Id& bus_id);
+	const Bus*  getBus(const BusId& bus_id) const;
+	Bus*		getBus(const BusId& bus_id);
+	const Stop* getStop(const StopId& stop_id) const;
+	Stop*		getStop(const StopId& stop_id);
 	
 	// check if 'bus_id' is being tracked by our 'bus_park_'
-	bool	isTracking(const Id& bus_id) const;
+	bool	isTracking(const BusId& bus_id) const;
+	// check if 'stop_id' is on our 'map_'
+	bool	isMapping(const StopId& stop_id) const;
 
 private:
 	Map&	 map_;

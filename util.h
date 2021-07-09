@@ -71,3 +71,20 @@ Number readNumberOnLine(std::istream& stream)
     std::getline(stream, dummy);
     return number;
 }
+
+//======================================= MISCELLANEA ==========================================//
+
+template <typename InputIt>
+void print_list(InputIt from, InputIt to, std::ostream& out)
+{
+    bool first = true;
+    while(from != to) {
+        if (first) {
+            out << *from++;
+            first = false;
+        }
+        else {
+            out << " " << *from++;
+        }
+    }
+}

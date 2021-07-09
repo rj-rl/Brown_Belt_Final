@@ -7,11 +7,11 @@
 #include <utility>
 #include <optional>
 
-using Id = std::string;	// for bus ids
+using BusId = std::string;
 
 class Bus {
 public:
-	Bus(Id id = {}, Route route = {})	// take stops by value to store them
+	Bus(BusId id = {}, Route route = {})	// take stops by value to store them
 		: id_ {std::move(id)}
 		, route_ {std::move(route)}
 	{}
@@ -20,6 +20,7 @@ public:
 	size_t			 stopCount() const;
 	size_t			 uniqueStopCount() const;
 	double			 routeLen(const Map& map) const;
+	const Route&     getRoute() const;
 
 	bool operator < (const Bus& that) const
 	{
@@ -27,7 +28,7 @@ public:
 	}
 
 private:
-	Id		id_;
+	BusId	id_;
 	Route	route_;
 };
 
@@ -36,16 +37,17 @@ class BusPark {
 public:
 	BusPark() = default;
 
-	void addBus(Bus bus)
+	const Bus* addBus(Bus bus)
 	{
-		buses_.emplace(bus.id(), std::move(bus));
+		auto res = buses_.emplace(bus.id(), std::move(bus));
+		return &res.first->second;
 	}
 
-	bool	   contains(const Id& bus_id) const;
-	Bus*       getBus(const Id& bus_id);
-	const Bus* getBus(const Id& bus_id) const;
+	bool	   contains(const BusId& bus_id) const;
+	Bus*       getBus(const BusId& bus_id);
+	const Bus* getBus(const BusId& bus_id) const;
 
 private:
-	std::unordered_map<Id, Bus> buses_;
+	std::unordered_map<BusId, Bus> buses_;
 };
 

@@ -18,19 +18,24 @@ double Bus::routeLen(const Map& map) const
     return route_.getLength(map);
 }
 
-bool BusPark::contains(const Id& bus_id) const
+const Route& Bus::getRoute() const
+{
+    return route_;
+}
+
+bool BusPark::contains(const BusId& bus_id) const
 {
     return buses_.count(bus_id) > 0;
 }
 
-Bus* BusPark::getBus(const Id& bus_id)
+Bus* BusPark::getBus(const BusId& bus_id)
 {
     return contains(bus_id)
         ? &buses_[bus_id]
         : nullptr;
 }
 
-const Bus* BusPark::getBus(const Id& bus_id) const
+const Bus* BusPark::getBus(const BusId& bus_id) const
 {
     return contains(bus_id)
         ? &buses_.at(bus_id)

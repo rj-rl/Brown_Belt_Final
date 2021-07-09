@@ -4,17 +4,29 @@
 #include <string_view>
 #include <vector>
 #include <deque>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <optional>
 
+using StopId = std::string;
+using BusList = std::set<std::string_view>;
+
+// fwd declarations
+class Bus;
+class Map;
+
 struct Stop {
-	std::string_view name;		// string_view makes sure Stops are cheap to copy
-	geo::Coordinate location;
+	std::string_view	name;		// string_view makes sure Stops are cheap to copy
+	geo::Coordinate		location;
+	BusList				buses;
 
 	Stop(std::string_view nm = {}, geo::Coordinate loc = {})
-		: name {nm}, location {loc}
+		: name {nm}, location {loc}, buses {}
 	{}
+
+	void			addBus(std::string_view bus_name);
+	const BusList*	getBusList() const { return &buses; }
 
 	bool operator < (const Stop& that) const { return name < that.name; }
 	bool operator == (const Stop& that) const { return name == that.name; }
@@ -27,7 +39,6 @@ struct Stop {
 	};
 };
 
-class Map;
 
 struct Route {
 	enum class Type {
@@ -36,14 +47,14 @@ struct Route {
 	};
 
 	Type								 type;
-	std::vector<Stop>					 stops;
+	std::vector<Stop*>					 stops;
 	std::unordered_set<std::string_view> unique_stop_names;
 	mutable std::optional<double>		 cached_length;
 
-	void addStop(Stop);
-	double getLength(const Map& map) const;
-	size_t getStopCount() const;
-	size_t getUniqueStopCount() const;
+	void	addStop(Stop*);
+	double	getLength(const Map& map) const;
+	size_t	getStopCount() const;
+	size_t	getUniqueStopCount() const;
 };
 
 
@@ -53,9 +64,13 @@ public:
 	{}
 
 	void addStop(std::string name, geo::Coordinate location);
-	Route buildRouteLine(const std::vector<std::string>& stop_names) const;
-	Route buildRouteCirc(const std::vector<std::string>& stop_names) const;
+	bool hasStop(const StopId& stop_id) const;
+	Route buildRouteLine(const std::vector<std::string>& stop_names);
+	Route buildRouteCirc(const std::vector<std::string>& stop_names);
 	double distance(std::string_view a, std::string_view b) const;
+
+	Stop*		getStop(const StopId& stop_id) { return &stops_.at(stop_id); }
+	const Stop* getStop(const StopId& stop_id) const { return &stops_.at(stop_id); }
 
 private:
 	std::unordered_map<std::string_view, Stop> stops_;
