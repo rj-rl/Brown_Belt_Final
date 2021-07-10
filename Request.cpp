@@ -143,13 +143,20 @@ void AddBusRequest::parseFrom(string_view input)
 
 void AddStopRequest::process(RouteManager& route_mgr)
 {
-    route_mgr.addStop(move(name), location);
+    route_mgr.addStop(move(name), location, move(distances));
 }
 
 void AddStopRequest::parseFrom(string_view input)
 {
     name = readToken(input , ": ");
     location = geo::Coordinate::parseFromStr(input);
+
+    while (!input.empty()) {
+        string stop_name;
+        double distance = strToNum<double>(readToken(input, "m to "));
+        stop_name = readToken(input, ", ");
+        distances[move(stop_name)] = distance;
+    }
 }
 
 //======================================= GetBusInfo ===========================================//
@@ -165,6 +172,7 @@ ResponseHolder GetBusInfo::process(RouteManager& route_mgr) const
         data.stop_cnt = route_mgr.getBusStopCount(bus_id);
         data.unique_stop_cnt = route_mgr.getBusUniqueStopCount(bus_id);
         data.route_len = route_mgr.getBusRouteLen(bus_id);
+        data.curvature = route_mgr.getBusRouteCurvature(bus_id);
         concrete_response.set_data(data);
     }
     return response;

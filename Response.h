@@ -34,6 +34,7 @@ struct BusInfoResponse : Response {
         size_t  stop_cnt = 0;
         size_t  unique_stop_cnt = 0;
         double  route_len = 0.0;
+        double  curvature = 1.0;
 
         Data() = default;
     };

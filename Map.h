@@ -11,18 +11,20 @@
 
 using StopId = std::string;
 using BusList = std::set<std::string_view>;
+using DistanceList = std::unordered_map<StopId, double>;
 
 // fwd declarations
 class Bus;
 class Map;
 
 struct Stop {
-	std::string_view	name;		// string_view makes sure Stops are cheap to copy
+	StopId				name;
 	geo::Coordinate		location;
 	BusList				buses;
+	DistanceList		distances;
 
-	Stop(std::string_view nm = {}, geo::Coordinate loc = {})
-		: name {nm}, location {loc}, buses {}
+	Stop(std::string_view nm = {}, geo::Coordinate loc = {}, DistanceList distances = {})
+		: name {nm}, location {loc}, buses {}, distances {move(distances)}
 	{}
 
 	void			addBus(std::string_view bus_name);
@@ -30,13 +32,6 @@ struct Stop {
 
 	bool operator < (const Stop& that) const { return name < that.name; }
 	bool operator == (const Stop& that) const { return name == that.name; }
-	struct Hasher {
-		size_t operator() (const Stop& stop) const
-		{
-			// POTENTIAL ERRORS down the line if we'll need to compare by coordinate too
-			return std::hash<std::string_view> {}(stop.name);
-		}
-	};
 };
 
 
@@ -45,16 +40,21 @@ struct Route {
 		CIRCLE,
 		LINE,
 	};
+	struct DistanceCache {
+		std::optional<double> by_road;
+		std::optional<double> crow_flies;
+	};
 
 	Type								 type;
 	std::vector<Stop*>					 stops;
 	std::unordered_set<std::string_view> unique_stop_names;
-	mutable std::optional<double>		 cached_length;
+	mutable DistanceCache				 cached_length;
 
-	void	addStop(Stop*);
-	double	getLength(const Map& map) const;
-	size_t	getStopCount() const;
-	size_t	getUniqueStopCount() const;
+	void	addStop				(Stop*);
+	double	getLengthCrowFlies	(const Map& map) const;
+	double	getLength			(const Map& map) const;
+	size_t	getStopCount		() const;
+	size_t	getUniqueStopCount	() const;
 };
 
 
@@ -63,22 +63,22 @@ public:
 	Map()
 	{}
 
-	void addStop(std::string name, geo::Coordinate location);
+	void addStop(StopId name, geo::Coordinate location, DistanceList distances);
 	bool hasStop(const StopId& stop_id) const;
-	Route buildRouteLine(const std::vector<std::string>& stop_names);
-	Route buildRouteCirc(const std::vector<std::string>& stop_names);
-	double distance(std::string_view a, std::string_view b) const;
-
 	Stop*		getStop(const StopId& stop_id) { return &stops_.at(stop_id); }
 	const Stop* getStop(const StopId& stop_id) const { return &stops_.at(stop_id); }
 
+	Route buildRouteLine(const std::vector<std::string>& stop_names);
+	Route buildRouteCirc(const std::vector<std::string>& stop_names);
+
+	double distanceCrowFlies(const StopId& a, const StopId& b) const;
+	double distance(const StopId& a, const StopId& b) const;
+
 private:
-	std::unordered_map<std::string_view, Stop> stops_;
+	std::unordered_map<StopId, Stop> stops_;
 
 // utility
 private:
-	std::deque<std::string> owned_names_;	// to make life easier with all the str_views
-	
 	using Segment = std::pair<geo::Coordinate, geo::Coordinate>;
 	struct SegmentHasher {
 		size_t operator() (const Segment& seg) const

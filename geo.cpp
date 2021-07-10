@@ -7,10 +7,10 @@ using namespace std;
 
 namespace geo {
 
-Coordinate Coordinate::parseFromStr(string_view input)
+Coordinate Coordinate::parseFromStr(string_view& input)
 {
     auto lat = strToNum<double>(readToken(input, ", "));
-    auto lon = strToNum<double>(readToken(input));
+    auto lon = strToNum<double>(readToken(input, ", "));
     return {lat, lon};
 }
 

@@ -20,6 +20,7 @@ public:
 	size_t			 stopCount() const;
 	size_t			 uniqueStopCount() const;
 	double			 routeLen(const Map& map) const;
+	double			 routeCurvature(const Map& map) const;
 	const Route&     getRoute() const;
 
 	bool operator < (const Bus& that) const

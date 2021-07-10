@@ -19,7 +19,7 @@ struct Coordinate {
 		, lon {lon}
 	{}
 	
-	static Coordinate parseFromStr(std::string_view input);
+	static Coordinate parseFromStr(std::string_view& input);
 
 	bool operator == (const Coordinate& that) const
 	{

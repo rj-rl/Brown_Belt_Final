@@ -17,9 +17,23 @@ void Route::addStop(Stop* stop)
 	unique_stop_names.emplace(stops.back()->name);
 }
 
+double Route::getLengthCrowFlies(const Map& map) const
+{
+	if (cached_length.crow_flies.has_value()) return *cached_length.crow_flies;
+
+	double total_length = 0.0;
+	Stop* first_stop = stops.front();
+	for (size_t i = 1; i < stops.size(); ++i) {
+		total_length += map.distanceCrowFlies(first_stop->name, stops[i]->name);
+		first_stop = stops[i];
+	}
+	cached_length.crow_flies = total_length;
+	return total_length;
+}
+
 double Route::getLength(const Map& map) const
 {
-	if (cached_length.has_value()) return *cached_length;
+	if (cached_length.by_road.has_value()) return *cached_length.by_road;
 
 	double total_length = 0.0;
 	Stop* first_stop = stops.front();
@@ -27,7 +41,7 @@ double Route::getLength(const Map& map) const
 		total_length += map.distance(first_stop->name, stops[i]->name);
 		first_stop = stops[i];
 	}
-	cached_length = total_length;
+	cached_length.by_road = total_length;
 	return total_length;
 }
 
@@ -43,11 +57,11 @@ size_t Route::getUniqueStopCount() const
 
 //========================================== MAP  ==============================================//
 
-void Map::addStop(string name, geo::Coordinate location)
+void Map::addStop(StopId name, geo::Coordinate location, DistanceList distances)
 {
-	owned_names_.push_back(move(name));
-	auto& str = owned_names_.back();
-	stops_[str] = Stop(str, location);
+	auto name_copy = name;	// to be able to move otherwise it's 
+	// "stops_[move(name)] = Stop(name, location);" and who knows what's evaluated first
+	stops_[move(name)] = Stop(move(name_copy), location, move(distances));
 }
 
 bool Map::hasStop(const StopId& stop_id) const
@@ -78,16 +92,32 @@ Route Map::buildRouteCirc(const vector<string>& stop_names)
 	return route;
 }
 
-double Map::distance(string_view a, string_view b) const
+double Map::distanceCrowFlies(const StopId& a, const StopId& b) const
 {
-	Stop stop_a = stops_.at(a);
-	Stop stop_b = stops_.at(b);
+	const Stop& stop_a = stops_.at(a);
+	const Stop& stop_b = stops_.at(b);
 	Segment a_b_segment = {stop_a.location, stop_b.location};
 
 	if (distance_cache_.count(a_b_segment) == 0) {
 		distance_cache_[a_b_segment] = geo::distance(stop_a.location, stop_b.location);
 	}
 	return distance_cache_[a_b_segment];
+}
+
+double Map::distance(const StopId& a, const StopId& b) const
+{
+	double distance = .0;
+	const Stop& stop_a = stops_.at(a);
+	const Stop& stop_b = stops_.at(b);
+	if (stop_a.distances.count(stop_b.name) > 0) {
+		return stop_a.distances.at(stop_b.name);
+	}
+	else if (stop_b.distances.count(stop_a.name)) {
+		return stop_b.distances.at(stop_a.name);
+	}
+	else {
+		return distanceCrowFlies(a, b);
+	}
 }
 
 //======================================== UTILITY  ============================================//

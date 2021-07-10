@@ -18,6 +18,11 @@ double Bus::routeLen(const Map& map) const
     return route_.getLength(map);
 }
 
+double Bus::routeCurvature(const Map& map) const
+{
+    return route_.getLength(map)/route_.getLengthCrowFlies(map);
+}
+
 const Route& Bus::getRoute() const
 {
     return route_;

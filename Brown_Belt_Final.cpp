@@ -28,11 +28,11 @@ int main()
 {
     //TestRunner tr;
     //RUN_TEST(tr, test_from_chars);
-    //RUN_TEST(tr, test_stop_hash);
     //RUN_TEST(tr, test_basic_A);
     //RUN_TEST(tr, test_basic_B);
+    //RUN_TEST(tr, test_basic_C);
 
-    setOutPrecision();
+    setOutPrecision(6);
 
     const auto modify_requests  = readRequests<RequestCategory::MODIFY>(); // filling the DB
     const auto query_requests = readRequests<RequestCategory::READ>(); // reading DB queries
