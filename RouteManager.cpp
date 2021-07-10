@@ -5,9 +5,9 @@
 #include <string_view>
 using namespace std;
 
-void RouteManager::addStop(StopId name, geo::Coordinate location)
+void RouteManager::addStop(StopId name, geo::Coordinate location, DistanceList distances)
 {
-	map_.addStop(move(name), location);
+	map_.addStop(move(name), location, move(distances));
 }
 
 void RouteManager::addBus(Bus bus)
@@ -37,7 +37,9 @@ double RouteManager::getBusRouteLen(const BusId& bus_id) const
 
 double RouteManager::getBusRouteCurvature(const BusId& bus_id) const
 {
-	return 1.0;	// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	Bus* bus = bus_park_.getBus(bus_id);
+	if (not bus) throw runtime_error("BusPark::getBus returned nullptr");
+	return bus->routeCurvature(map_);
 }
 
 size_t RouteManager::getBusStopCount(const BusId& bus_id) const

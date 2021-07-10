@@ -11,7 +11,7 @@
 
 using StopId = std::string;
 using BusList = std::set<std::string_view>;
-using DistanceList = std::unordered_map<std::string, double>;
+using DistanceList = std::unordered_map<StopId, double>;
 
 // fwd declarations
 class Bus;
@@ -23,8 +23,8 @@ struct Stop {
 	BusList				buses;
 	DistanceList		distances;
 
-	Stop(std::string_view nm = {}, geo::Coordinate loc = {})
-		: name {nm}, location {loc}, buses {}
+	Stop(std::string_view nm = {}, geo::Coordinate loc = {}, DistanceList distances = {})
+		: name {nm}, location {loc}, buses {}, distances {move(distances)}
 	{}
 
 	void			addBus(std::string_view bus_name);
@@ -63,7 +63,7 @@ public:
 	Map()
 	{}
 
-	void addStop(StopId name, geo::Coordinate location);
+	void addStop(StopId name, geo::Coordinate location, DistanceList distances);
 	bool hasStop(const StopId& stop_id) const;
 	Stop*		getStop(const StopId& stop_id) { return &stops_.at(stop_id); }
 	const Stop* getStop(const StopId& stop_id) const { return &stops_.at(stop_id); }

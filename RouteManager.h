@@ -3,6 +3,7 @@
 #include "BusPark.h"
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 class RouteManager {
 public:
@@ -25,7 +26,8 @@ public:
 	bool	isTracking				(const BusId& bus_id) const;
 
 	// stop query logic
-	void			addStop			(StopId name, geo::Coordinate location);
+	void			addStop			(StopId name, geo::Coordinate location, 
+									 DistanceList distances);
 	const BusList*	getStopBusList	(const StopId& stop_id) const;
 	const Stop*		getStop			(const StopId& stop_id) const;
 	Stop*			getStop			(const StopId& stop_id);

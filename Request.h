@@ -40,7 +40,6 @@ static const TypeTable STR_TO_MODIFYING_REQUEST_TYPE = {
     {"Stop", Request::Type::ADD_STOP},
     {"Bus", Request::Type::ADD_BUS},
 };
-
 static const TypeTable STR_TO_QUERY_TYPE = {
     {"Bus", Request::Type::GET_BUS_INFO},
     {"Stop", Request::Type::GET_STOP_INFO},
@@ -79,6 +78,7 @@ struct AddBusRequest : ModifyRequest {
 struct AddStopRequest : ModifyRequest {
     std::string     name;
     geo::Coordinate location;
+    std::unordered_map<StopId, double> distances;
 
     AddStopRequest()
         : ModifyRequest(Request::Type::ADD_STOP)

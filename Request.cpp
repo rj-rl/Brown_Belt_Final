@@ -143,13 +143,20 @@ void AddBusRequest::parseFrom(string_view input)
 
 void AddStopRequest::process(RouteManager& route_mgr)
 {
-    route_mgr.addStop(move(name), location);
+    route_mgr.addStop(move(name), location, move(distances));
 }
 
 void AddStopRequest::parseFrom(string_view input)
 {
     name = readToken(input , ": ");
     location = geo::Coordinate::parseFromStr(input);
+
+    while (!input.empty()) {
+        string stop_name;
+        double distance = strToNum<double>(readToken(input, "m to "));
+        stop_name = readToken(input, ", ");
+        distances[move(stop_name)] = distance;
+    }
 }
 
 //======================================= GetBusInfo ===========================================//

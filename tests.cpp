@@ -96,3 +96,24 @@ void test_basic_B()
 	printResponses(query_responses, output);
 	ASSERT_EQUAL(output.str(), correct_output);
 }
+
+void test_basic_C()
+{
+	string correct_output =
+		R"(Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature)""\n"
+		R"(Bus 750: 5 stops on route, 3 unique stops, 27600 route length, 1.31808 curvature)""\n"
+		R"(Bus 751: not found)""\n"
+		R"(Stop Samara: not found)""\n"
+		R"(Stop Prazhskaya: no buses)""\n"
+		R"(Stop Biryulyovo Zapadnoye: buses 256 828)""\n";
+
+	setOutPrecision();
+	ifstream input("Tests/test_basic_C.txt");
+	ostringstream output;
+
+	auto modify_requests = readRequests<RequestCategory::MODIFY>(input);
+	auto query_requests = readRequests<RequestCategory::READ>(input);
+	auto query_responses = processRequests(modify_requests, query_requests);
+	printResponses(query_responses, output);
+	ASSERT_EQUAL(output.str(), correct_output);
+}
