@@ -28,6 +28,11 @@ void BusInfoResponse::print(std::ostream& out) const
     }
 }
 
+void BusInfoResponse::printJson(std::ostream& out) const
+{
+
+}
+
 void StopInfoResponse::print(std::ostream& out) const
 {
     out << "Stop " << stop_id << ": ";
@@ -43,4 +48,9 @@ void StopInfoResponse::print(std::ostream& out) const
     else {
         out << "not found";
     }
+}
+
+void StopInfoResponse::printJson(std::ostream& out) const
+{
+
 }

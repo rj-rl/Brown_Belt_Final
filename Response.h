@@ -25,6 +25,7 @@ struct Response {
     Response(Type type) : type {type} {}
     static ResponseHolder create(Type type);
     virtual void print(std::ostream& out) const = 0;
+    virtual void printJson(std::ostream& out) const = 0;
     virtual ~Response() = default;
 };
 
@@ -54,6 +55,7 @@ struct BusInfoResponse : Response {
         this->data = data; 
     }
     void print(std::ostream& out) const override;
+    void printJson(std::ostream& out) const override;
 };
 
 
@@ -74,4 +76,5 @@ struct StopInfoResponse : Response {
         this->data = std::move(data); 
     }
     void print(std::ostream& out) const override;
+    void printJson(std::ostream& out) const override;
 };

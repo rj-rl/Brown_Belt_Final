@@ -123,6 +123,18 @@ void AddBusRequest::parseRouteType(string_view input, string* delimiter)
     }
 }
 
+void AddBusRequest::parseRouteType(const Json::Node& input)
+{
+    if (input.AsMap().at("is_roundtrip").AsBool()) {
+        route_type = Route::Type::CIRCLE;
+        return;
+    }
+    else {
+        route_type = Route::Type::LINE;
+        return;
+    }
+}
+
 void AddBusRequest::parseFrom(string_view input)
 {
     bus_id = readToken(input, ": ");
@@ -131,6 +143,22 @@ void AddBusRequest::parseFrom(string_view input)
 
     while (not input.empty()) {
         stop_names.emplace_back(readToken(input, delimiter));
+    }
+
+    if (route_type == Route::Type::CIRCLE
+        && stop_names.front() != stop_names.back()) {
+        throw runtime_error("Invalid circle route, first and last must match");
+    }
+}
+
+void AddBusRequest::parseFrom(const Json::Node& input)
+{
+    const auto& details = input.AsMap();
+    bus_id = details.at("name").AsString();
+    parseRouteType(input);
+
+    for (const auto& stop : details.at("stops").AsArray()) {
+        stop_names.emplace_back(stop.AsString());
     }
 
     if (route_type == Route::Type::CIRCLE
@@ -159,6 +187,17 @@ void AddStopRequest::parseFrom(string_view input)
     }
 }
 
+void AddStopRequest::parseFrom(const Json::Node& input)
+{
+    const auto& details = input.AsMap();
+    name = details.at("name").AsString();
+    location = geo::Coordinate::parseFromJson(input);
+
+    for (const auto& stop : details.at("road_distances").AsMap()) {
+        distances[stop.first] = stop.second.AsInt();
+    }
+}
+
 //======================================= GetBusInfo ===========================================//
 
 ResponseHolder GetBusInfo::process(RouteManager& route_mgr) const
@@ -183,6 +222,12 @@ void GetBusInfo::parseFrom(string_view input)
     bus_id = input;
 }
 
+void GetBusInfo::parseFrom(const Json::Node& input)
+{
+    bus_id = input.AsMap().at("name").AsString();
+    request_id = input.AsMap().at("id").AsInt();
+}
+
 //======================================= GetStopInfo ===========================================//
 
 ResponseHolder GetStopInfo::process(RouteManager& route_mgr) const
@@ -204,4 +249,10 @@ ResponseHolder GetStopInfo::process(RouteManager& route_mgr) const
 void GetStopInfo::parseFrom(string_view input)
 {
     stop_id = input;
+}
+
+void GetStopInfo::parseFrom(const Json::Node& input)
+{
+    stop_id = input.AsMap().at("name").AsString();
+    request_id = input.AsMap().at("id").AsInt();
 }

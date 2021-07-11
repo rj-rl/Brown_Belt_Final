@@ -14,6 +14,13 @@ Coordinate Coordinate::parseFromStr(string_view& input)
     return {lat, lon};
 }
 
+Coordinate Coordinate::parseFromJson(const Json::Node& input)
+{
+    const auto& lon = input.AsMap().at("longitude").AsDouble();
+    const auto& lat = input.AsMap().at("latitude").AsDouble();
+    return {lat, lon};
+}
+
 // haversine formula
 double distance(Coordinate punkt_a, Coordinate punkt_b)
 {

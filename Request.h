@@ -4,6 +4,7 @@
 #include "BusPark.h"
 #include "RouteManager.h"
 #include "Response.h"
+#include "json.h"
 
 #include <memory>
 #include <string>
@@ -12,6 +13,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <optional>
+#include <utility>
 
 //======================================= REQUESTS =============================================//
 
@@ -29,6 +31,7 @@ struct Request {
     Request(Type type) : type(type) {}
     static RequestHolder create(Type type);
     virtual void parseFrom(std::string_view input) = 0;
+    virtual void parseFrom(const Json::Node& input) = 0;
     virtual ~Request() = default;
 
     const Type type;
@@ -49,6 +52,7 @@ static const TypeTable STR_TO_QUERY_TYPE = {
 template <typename ResultType>
 struct QueryRequest : Request {
     using Request::Request;
+    size_t request_id {0u};
     virtual ResultType process(RouteManager& route_mgr) const = 0;
 };
 
@@ -72,7 +76,9 @@ struct AddBusRequest : ModifyRequest {
 
     void process(RouteManager& route_mgr) override;
     void parseFrom(std::string_view) override;
+    void parseFrom(const Json::Node& input) override;
     void parseRouteType(std::string_view input, std::string* delimiter);
+    void parseRouteType(const Json::Node& input);
 };
 
 struct AddStopRequest : ModifyRequest {
@@ -86,6 +92,7 @@ struct AddStopRequest : ModifyRequest {
 
     void process(RouteManager& route_mgr) override;
     void parseFrom(std::string_view) override;
+    void parseFrom(const Json::Node& input) override;
 };
 
 
@@ -99,6 +106,7 @@ struct GetBusInfo : QueryRequest<ResponseHolder> {
 
     ResponseHolder process(RouteManager& route_mgr) const override;
     void parseFrom(std::string_view) override;
+    void parseFrom(const Json::Node& input) override;
 };
 
 
@@ -112,6 +120,7 @@ struct GetStopInfo : QueryRequest<ResponseHolder> {
 
     ResponseHolder process(RouteManager& route_mgr) const override;
     void parseFrom(std::string_view) override;
+    void parseFrom(const Json::Node& input) override;
 };
 
 //================================== REQUESTS CONTAINER ========================================//
@@ -147,13 +156,13 @@ RequestsContainer readRequests(std::istream& in = std::cin)
         std::getline(in, request_str);
         if (auto request = parseRequest(request_str, category)) {
             if (request->type == Request::Type::ADD_BUS) {
-                requests.fill_bus_park_requests.push_back(move(request));
+                requests.fill_bus_park_requests.push_back(std::move(request));
             }
             else if (request->type == Request::Type::ADD_STOP) {
-                requests.fill_map_requests.push_back(move(request));
+                requests.fill_map_requests.push_back(std::move(request));
             }
             else {
-                requests.queries.push_back(move(request));
+                requests.queries.push_back(std::move(request));
             }
         }
     }

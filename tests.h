@@ -7,3 +7,5 @@ void test_basic_A();
 void test_basic_B();
 
 void test_basic_C();
+
+void test_JSON_input();

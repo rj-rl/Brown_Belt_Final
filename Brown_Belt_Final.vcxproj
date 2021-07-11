@@ -146,6 +146,7 @@
     <ClCompile Include="Brown_Belt_Final.cpp" />
     <ClCompile Include="BusPark.cpp" />
     <ClCompile Include="geo.cpp" />
+    <ClCompile Include="json.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Request.cpp" />
     <ClCompile Include="Response.cpp" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="BusPark.h" />
     <ClInclude Include="geo.h" />
+    <ClInclude Include="json.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="profile.h" />
     <ClInclude Include="Request.h" />
