@@ -3,6 +3,7 @@
 #include <string_view>
 #include <tuple>		// for std::tie
 #include <functional>	// for std::hash
+#include "json.h"
 
 namespace geo {
 
@@ -20,6 +21,7 @@ struct Coordinate {
 	{}
 	
 	static Coordinate parseFromStr(std::string_view& input);
+	static Coordinate parseFromJson(const Json::Node& input);
 
 	bool operator == (const Coordinate& that) const
 	{

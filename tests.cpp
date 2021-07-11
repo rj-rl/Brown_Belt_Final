@@ -6,6 +6,7 @@
 #include "Request.h"
 #include "Map.h"
 #include "BusPark.h"
+#include "json.h"
 
 #include <iostream>
 #include <fstream>
@@ -115,5 +116,21 @@ void test_basic_C()
 	auto query_requests = readRequests<RequestCategory::READ>(input);
 	auto query_responses = processRequests(modify_requests, query_requests);
 	printResponses(query_responses, output);
+	ASSERT_EQUAL(output.str(), correct_output);
+}
+
+void test_basic_D()
+{
+	ifstream correct_output_file("Tests/test_basic_D_correct_output.txt");
+	string correct_output {
+		(istreambuf_iterator<char>(correct_output_file)),
+		istreambuf_iterator<char>()
+	};
+	ifstream input("Tests/test_JSON_input.txt");
+	RequestsContainer parsed_requests = readRequestsJson(input);
+	const auto query_responses = processRequests(parsed_requests, parsed_requests);
+
+	ostringstream output;
+	printResponsesJSON(query_responses, output);
 	ASSERT_EQUAL(output.str(), correct_output);
 }

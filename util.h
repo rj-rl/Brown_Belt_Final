@@ -75,16 +75,17 @@ Number readNumberOnLine(std::istream& stream)
 //======================================= MISCELLANEA ==========================================//
 
 template <typename InputIt>
-void print_list(InputIt from, InputIt to, std::ostream& out)
+void print_list(InputIt from, InputIt to, std::ostream& out, 
+                std::string_view delim = " ", std::string_view surround = "")
 {
     bool first = true;
     while(from != to) {
         if (first) {
-            out << *from++;
+            out << surround << *from++ << surround;
             first = false;
         }
         else {
-            out << " " << *from++;
+            out << delim << surround << *from++ << surround;
         }
     }
 }
