@@ -144,6 +144,7 @@ std::optional<Request::Type> convertRequestTypeFromString(
     std::string_view type_str, const TypeTable& table);
 
 RequestHolder parseRequest(std::string_view request_str, RequestCategory category);
+RequestHolder parseRequestFromJson(const Json::Node& node, RequestCategory category);
 
 template <RequestCategory category>
 RequestsContainer readRequests(std::istream& in = std::cin)
@@ -169,8 +170,11 @@ RequestsContainer readRequests(std::istream& in = std::cin)
     return requests;
 }
 
+RequestsContainer readRequestsJson(std::istream& input = std::cin);
+
 std::vector<ResponseHolder> processRequests(
     const RequestsContainer& modify_requests,
     const RequestsContainer& query_requests);
 
 void printResponses(const std::vector<ResponseHolder>&, std::ostream& stream = std::cout);
+void printResponsesJSON(const std::vector<ResponseHolder>&, std::ostream& stream = std::cout);

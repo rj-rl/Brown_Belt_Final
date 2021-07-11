@@ -21,9 +21,10 @@ struct Response {
         STOP_INFO,
     };
     const Type type;
+    const size_t request_id;
 
-    Response(Type type) : type {type} {}
-    static ResponseHolder create(Type type);
+    Response(Type type, size_t request_id = 0) : type {type}, request_id {request_id} {}
+    static ResponseHolder create(Type type, size_t request_id = 0);
     virtual void print(std::ostream& out) const = 0;
     virtual void printJson(std::ostream& out) const = 0;
     virtual ~Response() = default;
@@ -42,8 +43,8 @@ struct BusInfoResponse : Response {
     BusId bus_id = {};
     std::optional<Data> data = std::nullopt;
 
-    BusInfoResponse()
-        : Response(Response::Type::BUS_INFO)
+    BusInfoResponse(size_t request_id)
+        : Response(Response::Type::BUS_INFO, request_id)
     {
     }
     void set_bus_id(BusId bus_id) 
@@ -63,8 +64,8 @@ struct StopInfoResponse : Response {
     StopId stop_id = {};
     std::optional<std::vector<std::string>> data = std::nullopt;
 
-    StopInfoResponse()
-        : Response(Response::Type::STOP_INFO)
+    StopInfoResponse(size_t request_id)
+        : Response(Response::Type::STOP_INFO, request_id)
     {
     }
     void set_stop_id(StopId stop_id) 

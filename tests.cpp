@@ -119,68 +119,18 @@ void test_basic_C()
 	ASSERT_EQUAL(output.str(), correct_output);
 }
 
-
-
-
-
-
-optional<Request::Type> getRequestTypeFromJson(const Json::Node& node, const TypeTable& table)
+void test_basic_D()
 {
-	if (const auto it = table.find(node.AsMap().at("type").AsString());
-		it != table.end()) {
-		return it->second;
-	}
-	else {
-		return nullopt;
-	}
-}
-
-RequestHolder parseRequestFromJson(const Json::Node& node, RequestCategory category)
-{
-	const auto& details = node.AsMap();
-	const TypeTable& table = (category == RequestCategory::READ)
-		? STR_TO_QUERY_TYPE
-		: STR_TO_MODIFYING_REQUEST_TYPE;
-	const auto request_type = getRequestTypeFromJson(node, table);
-	if (!request_type) {
-		return nullptr;
-	}
-	RequestHolder request = Request::create(*request_type);
-	if (request) {
-		request->parseFrom(node);
+	ifstream correct_output_file("Tests/test_basic_D_correct_output.txt");
+	string correct_output {
+		(istreambuf_iterator<char>(correct_output_file)),
+		istreambuf_iterator<char>()
 	};
-	return request;
-}
-
-RequestsContainer readRequestsJson(std::istream& input)
-{
-	RequestsContainer requests;
-	Json::Document doc {Json::Load(input)};
-	const auto& modify_requests = doc.GetRoot().AsMap().at("base_requests").AsArray();
-	const auto& read_requests = doc.GetRoot().AsMap().at("stat_requests").AsArray();
-
-	for (size_t i = 0; i < modify_requests.size(); ++i) {
-		if (auto request = parseRequestFromJson(modify_requests[i], RequestCategory::MODIFY)) {
-			if (request->type == Request::Type::ADD_BUS) {
-				requests.fill_bus_park_requests.push_back(move(request));
-			}
-			else if (request->type == Request::Type::ADD_STOP) {
-				requests.fill_map_requests.push_back(move(request));
-			}
-		}
-	}
-	for (size_t i = 0; i < read_requests.size(); ++i) {
-		if (auto request = parseRequestFromJson(read_requests[i], RequestCategory::READ)) {
-			requests.queries.push_back(move(request));
-		}
-	}
-	return requests;
-}
-
-void test_JSON_input()
-{
 	ifstream input("Tests/test_JSON_input.txt");
 	RequestsContainer parsed_requests = readRequestsJson(input);
 	const auto query_responses = processRequests(parsed_requests, parsed_requests);
-	printResponses(query_responses);
+
+	ostringstream output;
+	printResponsesJSON(query_responses, output);
+	ASSERT_EQUAL(output.str(), correct_output);
 }

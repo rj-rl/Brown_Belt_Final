@@ -17,9 +17,37 @@ void printResponses(const vector<ResponseHolder>& responses, ostream& out)
     }
 }
 
+void printResponsesJSON(const vector<ResponseHolder>& responses, ostream& out)
+{
+    out << "[\n";
+    bool first = true;
+    for (const auto& response : responses) {
+        if (first) {
+            response->printJson(out);
+            first = false;
+        }
+        else {
+            out << ",\n";
+            response->printJson(out);
+        }
+    }
+    out << "\n]";
+}
+
 optional<Request::Type> convertRequestTypeFromString(string_view type_str, const TypeTable& table)
 {
     if (const auto it = table.find(type_str);
+        it != table.end()) {
+        return it->second;
+    }
+    else {
+        return nullopt;
+    }
+}
+
+optional<Request::Type> getRequestTypeFromJson(const Json::Node& node, const TypeTable& table)
+{
+    if (const auto it = table.find(node.AsMap().at("type").AsString());
         it != table.end()) {
         return it->second;
     }
@@ -60,6 +88,48 @@ RequestHolder parseRequest(string_view request_str, RequestCategory category)
         request->parseFrom(request_str);
     };
     return request;
+}
+
+RequestHolder parseRequestFromJson(const Json::Node& node, RequestCategory category)
+{
+    const auto& details = node.AsMap();
+    const TypeTable& table = (category == RequestCategory::READ)
+        ? STR_TO_QUERY_TYPE
+        : STR_TO_MODIFYING_REQUEST_TYPE;
+    const auto request_type = getRequestTypeFromJson(node, table);
+    if (!request_type) {
+        return nullptr;
+    }
+    RequestHolder request = Request::create(*request_type);
+    if (request) {
+        request->parseFrom(node);
+    };
+    return request;
+}
+
+RequestsContainer readRequestsJson(std::istream& input)
+{
+    RequestsContainer requests;
+    Json::Document doc {Json::Load(input)};
+    const auto& modify_requests = doc.GetRoot().AsMap().at("base_requests").AsArray();
+    const auto& read_requests = doc.GetRoot().AsMap().at("stat_requests").AsArray();
+
+    for (size_t i = 0; i < modify_requests.size(); ++i) {
+        if (auto request = parseRequestFromJson(modify_requests[i], RequestCategory::MODIFY)) {
+            if (request->type == Request::Type::ADD_BUS) {
+                requests.fill_bus_park_requests.push_back(move(request));
+            }
+            else if (request->type == Request::Type::ADD_STOP) {
+                requests.fill_map_requests.push_back(move(request));
+            }
+        }
+    }
+    for (size_t i = 0; i < read_requests.size(); ++i) {
+        if (auto request = parseRequestFromJson(read_requests[i], RequestCategory::READ)) {
+            requests.queries.push_back(move(request));
+        }
+    }
+    return requests;
 }
 
 vector<ResponseHolder> processRequests(
@@ -202,10 +272,10 @@ void AddStopRequest::parseFrom(const Json::Node& input)
 
 ResponseHolder GetBusInfo::process(RouteManager& route_mgr) const
 {
-    ResponseHolder response = Response::create(Response::Type::BUS_INFO);
+    ResponseHolder response = Response::create(Response::Type::BUS_INFO, request_id);
     auto& concrete_response = static_cast<BusInfoResponse&>(*response);
 
-    concrete_response.set_bus_id(bus_id);
+    concrete_response.set_bus_id(bus_id);    
     if (route_mgr.isTracking(bus_id)) {
         auto data = BusInfoResponse::Data();
         data.stop_cnt = route_mgr.getBusStopCount(bus_id);
@@ -232,7 +302,7 @@ void GetBusInfo::parseFrom(const Json::Node& input)
 
 ResponseHolder GetStopInfo::process(RouteManager& route_mgr) const
 {
-    ResponseHolder response = Response::create(Response::Type::STOP_INFO);
+    ResponseHolder response = Response::create(Response::Type::STOP_INFO, request_id);
     auto& concrete_response = static_cast<StopInfoResponse&>(*response);
 
     concrete_response.set_stop_id(stop_id);
