@@ -22,10 +22,12 @@ using RequestHolder = std::unique_ptr<Request>;
 
 struct Request {
     enum class Type {
+        ADD_ROUTING_SETTINGS,
         ADD_STOP,
         ADD_BUS,
         GET_BUS_INFO,
         GET_STOP_INFO,
+        GET_ROUTE_INFO,
     };
 
     Request(Type type) : type(type) {}
@@ -46,6 +48,7 @@ static const TypeTable STR_TO_MODIFYING_REQUEST_TYPE = {
 static const TypeTable STR_TO_QUERY_TYPE = {
     {"Bus", Request::Type::GET_BUS_INFO},
     {"Stop", Request::Type::GET_STOP_INFO},
+    {"Route", Request::Type::GET_ROUTE_INFO},
 };
 
 
@@ -62,6 +65,22 @@ struct ModifyRequest : Request {
 };
 
 // CONCRETE TYPES BELOW
+
+struct AddRoutingSettings : ModifyRequest {
+    int     bus_wait_time;  // in seconds
+    double  bus_velocity;   // in meters per second
+
+    AddRoutingSettings()
+        : ModifyRequest(Request::Type::ADD_ROUTING_SETTINGS)
+        , bus_wait_time {}
+        , bus_velocity {}
+    {}
+
+    void process(RouteManager& route_mgr) override;
+    void parseFrom(std::string_view) override { /* not implemented */ }
+    void parseFrom(const Json::Node& input) override;
+};
+
 
 struct AddBusRequest : ModifyRequest {
     BusId                     bus_id;
@@ -80,6 +99,7 @@ struct AddBusRequest : ModifyRequest {
     void parseRouteType(std::string_view input, std::string* delimiter);
     void parseRouteType(const Json::Node& input);
 };
+
 
 struct AddStopRequest : ModifyRequest {
     std::string     name;
@@ -123,9 +143,24 @@ struct GetStopInfo : QueryRequest<ResponseHolder> {
     void parseFrom(const Json::Node& input) override;
 };
 
+
+struct GetRouteInfo : QueryRequest<ResponseHolder> {
+    StopId from;
+    StopId to;
+
+    GetRouteInfo()
+        : QueryRequest(Request::Type::GET_ROUTE_INFO)
+    {}
+
+    ResponseHolder process(RouteManager& route_mgr) const override;
+    void parseFrom(std::string_view) override { /* not implemented */ }
+    void parseFrom(const Json::Node& input) override;
+};
+
 //================================== REQUESTS CONTAINER ========================================//
 
 struct RequestsContainer {
+    RequestHolder              routing_settings_request;
     std::vector<RequestHolder> fill_map_requests;
     std::vector<RequestHolder> fill_bus_park_requests;
     std::vector<RequestHolder> queries;

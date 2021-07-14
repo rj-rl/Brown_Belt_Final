@@ -1,12 +1,12 @@
 //==============================================================================================//
 //                                                                                              //
-//	https://www.coursera.org/learn/c-plus-plus-brown/programming/ZfEFg/transportnyi-spravochnik-chast-d //
+//	https://www.coursera.org/learn/c-plus-plus-brown/programming/GBep2/transportnyi-spravochnik-chast-e //
 //                                                                                              //
 //==============================================================================================//
 
-//#include "profile.h"
-//#include "test_runner.h"
-//#include "tests.h"
+#include "profile.h"
+#include "test_runner.h"
+#include "tests.h"
 #include "util.h"
 #include "geo.h"
 #include "Request.h"
@@ -26,13 +26,17 @@ using namespace std;
 
 int main()
 {
-    //TestRunner tr;
+    setOutPrecision(6);
+
+    TestRunner tr;
+    //RUN_TEST(tr, test_router);
+    //RUN_TEST(tr, test_routing_settings);
+    //RUN_TEST(tr, test_SI_units);
+    RUN_TEST(tr, test_basic_E_example_4);
     //RUN_TEST(tr, test_basic_A);
     //RUN_TEST(tr, test_basic_B);
     //RUN_TEST(tr, test_basic_C);
     //RUN_TEST(tr, test_basic_D);
-
-    setOutPrecision(6);
 
     const auto requests = readRequestsJson();
     const auto query_responses = processRequests(requests, requests);

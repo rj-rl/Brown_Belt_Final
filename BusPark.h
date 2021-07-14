@@ -41,14 +41,17 @@ public:
 	const Bus* addBus(Bus bus)
 	{
 		auto res = buses_.emplace(bus.id(), std::move(bus));
+		bus_list_.push_back(&res.first->second);
 		return &res.first->second;
 	}
 
 	bool	   contains(const BusId& bus_id) const;
 	Bus*       getBus(const BusId& bus_id);
 	const Bus* getBus(const BusId& bus_id) const;
+	const auto& getBusList() const { return bus_list_; }
 
 private:
 	std::unordered_map<BusId, Bus> buses_;
+	std::vector<Bus*>			   bus_list_;
 };
 

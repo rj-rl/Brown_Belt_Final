@@ -10,7 +10,7 @@
 #include <optional>
 
 using StopId = std::string;
-using BusList = std::set<std::string_view>;
+using BusSet = std::set<std::string_view>;
 using DistanceList = std::unordered_map<StopId, double>;
 
 // fwd declarations
@@ -20,15 +20,16 @@ class Map;
 struct Stop {
 	StopId				name;
 	geo::Coordinate		location;
-	BusList				buses;
+	BusSet				buses;
 	DistanceList		distances;
 
 	Stop(std::string_view nm = {}, geo::Coordinate loc = {}, DistanceList distances = {})
 		: name {nm}, location {loc}, buses {}, distances {move(distances)}
 	{}
 
+	std::string_view id() const { return name; }
 	void			addBus(std::string_view bus_name);
-	const BusList*	getBusList() const { return &buses; }
+	const BusSet*	getBuses() const { return &buses; }
 
 	bool operator < (const Stop& that) const { return name < that.name; }
 	bool operator == (const Stop& that) const { return name == that.name; }
@@ -65,6 +66,7 @@ public:
 
 	void addStop(StopId name, geo::Coordinate location, DistanceList distances);
 	bool hasStop(const StopId& stop_id) const;
+	auto stopCount() const { return stops_.size(); }
 	Stop*		getStop(const StopId& stop_id) { return &stops_.at(stop_id); }
 	const Stop* getStop(const StopId& stop_id) const { return &stops_.at(stop_id); }
 
@@ -74,8 +76,11 @@ public:
 	double distanceCrowFlies(const StopId& a, const StopId& b) const;
 	double distance(const StopId& a, const StopId& b) const;
 
+	const auto& getStopList() const { return stop_list_; }
+
 private:
 	std::unordered_map<StopId, Stop> stops_;
+	std::vector<Stop*>				 stop_list_;
 
 // utility
 private:

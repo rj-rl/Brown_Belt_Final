@@ -3,6 +3,7 @@
 #include <memory>
 #include <utility>
 #include <optional>
+#include <variant>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -19,6 +20,7 @@ struct Response {
     enum class Type {
         BUS_INFO,
         STOP_INFO,
+        ROUTE_INFO,
     };
     const Type type;
     const size_t request_id;
@@ -77,5 +79,40 @@ struct StopInfoResponse : Response {
         this->data = std::move(data); 
     }
     void print(std::ostream& out) const override;
+    void printJson(std::ostream& out) const override;
+};
+
+
+struct RouteInfoResponse : Response {
+    struct WaitInfo {
+        StopId  stop_id = {};
+    }; 
+    struct RideInfo {
+        BusId   bus_id = {};
+        int     span_count = 0;
+        double  time = 0.0;
+    };
+    struct Data {
+        double total_time = 0.0;
+        std::vector<std::variant<WaitInfo, RideInfo>> segments;
+    };
+
+    int                 wait_time = 0;
+    std::optional<Data> data = std::nullopt;
+
+    RouteInfoResponse(size_t request_id)
+        : Response(Response::Type::ROUTE_INFO, request_id)
+    {
+    }
+
+    void set_wait_time(int wait_time)
+    {
+        this->wait_time = wait_time;
+    }
+    void set_data(Data data)
+    {
+        this->data = std::move(data);
+    }
+    void print(std::ostream& out) const override { /* not implemented */ }
     void printJson(std::ostream& out) const override;
 };

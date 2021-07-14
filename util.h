@@ -11,19 +11,6 @@
 #include <utility>
 #include <stdexcept>
 
-template <typename It>
-class Range {
-public:
-    Range(It begin, It end) : begin_(begin), end_(end) {}
-    It begin() const { return begin_; }
-    It end() const { return end_; }
-
-private:
-    It begin_;
-    It end_;
-};
-
-
 inline void setOutPrecision(size_t n = 6)
 {
     std::cout << std::setprecision(n);
@@ -88,4 +75,19 @@ void print_list(InputIt from, InputIt to, std::ostream& out,
             out << delim << surround << *from++ << surround;
         }
     }
+}
+
+inline double kphToMps(double speed)
+{
+    return speed / 3.6;
+}
+
+inline double secondsToMinutes(double seconds)
+{
+    return seconds / 60;
+}
+
+inline double minutesToSeconds(double minutes)
+{
+    return minutes * 60;
 }
