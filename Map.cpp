@@ -59,9 +59,14 @@ size_t Route::getUniqueStopCount() const
 
 void Map::addStop(StopId name, geo::Coordinate location, DistanceList distances)
 {
-	auto name_copy = name;	// to be able to move otherwise it's 
+	auto name_copy = name;	// to be able to move, otherwise it'd be 
 	// "stops_[move(name)] = Stop(name, location);" and who knows what's evaluated first
-	stops_[move(name)] = Stop(move(name_copy), location, move(distances));
+	// Version without support for stop_list_
+	//stops_[move(name)] = Stop(move(name_copy), location, move(distances));
+
+	// Alternative version supporting stop_list_:
+	auto res = stops_.emplace(move(name), Stop(move(name_copy), location, move(distances)));
+	stop_list_.push_back(&res.first->second);	
 }
 
 bool Map::hasStop(const StopId& stop_id) const

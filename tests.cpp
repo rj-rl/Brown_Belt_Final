@@ -7,6 +7,8 @@
 #include "Map.h"
 #include "BusPark.h"
 #include "json.h"
+#include "graph.h"
+#include "router.h"
 
 #include <iostream>
 #include <fstream>
@@ -22,31 +24,38 @@
 #include <optional>
 #include <charconv>
 using namespace std;
+using namespace Graph;
 
-// In the end: no leading whitespace allowed
-void test_from_chars()
+void test_router()
 {
-	double result = 42.69;
-	string d_num = "42.69";
-	string_view sv {d_num};
-	double d_converted;
-	std::from_chars(sv.data(), sv.data()+sv.size(), d_converted);
+	DirectedWeightedGraph<int> graph(5);
+	//			   A  B  distance
+	graph.AddEdge({0, 1,    10});	// 0th edge
+	graph.AddEdge({0, 2,    1});	// 1
+	graph.AddEdge({2, 3,    2});	// 2
+	graph.AddEdge({3, 2,    2});	// 3
+	graph.AddEdge({3, 1,    4});	// 4
+	Router<int> router(graph);
+	auto path = router.BuildRoute(0, 1);
+	for (size_t i = 0; i < path->edge_count; ++i) {
+		cout << "edge # " << router.GetRouteEdge(path->id, i) << '\n';
+	}
+}
 
-	string d_num_ws = "   42.69 ";
-	sv = d_num_ws;
-	sv = strip_ws(sv);
-	double d_ws_converted;
-	std::from_chars(sv.data(), sv.data()+sv.size(), d_ws_converted);
+void test_routing_settings()
+{
+	ifstream input("Tests/test_routing_settings_input.txt");
+	RequestsContainer parsed_requests = readRequestsJson(input);
+	const auto& concrete_type_parsed_requests =
+		static_cast<AddRoutingSettings&>(*parsed_requests.routing_settings_request);
+	ASSERT_EQUAL(concrete_type_parsed_requests.bus_wait_time, 6 * 60);
+	ASSERT_EQUAL(concrete_type_parsed_requests.bus_velocity, 40 / 3.6);
+}
 
-	string d_num_noisy = "42.69abc,";
-	sv = d_num_noisy;
-	sv = strip_ws(sv);
-	double d_ws_noisy_converted;
-	std::from_chars(sv.data(), sv.data()+sv.size(), d_ws_noisy_converted);
-		
-	ASSERT_EQUAL(d_converted, result);
-	ASSERT_EQUAL(d_ws_converted, result);
-	ASSERT_EQUAL(d_ws_noisy_converted, result);
+void test_SI_units()
+{
+	double distance = 2600 + 890;
+	ASSERT_EQUAL(5.235, secondsToMinutes(distance/kphToMps(40)));
 }
 
 void test_basic_A()
@@ -133,4 +142,36 @@ void test_basic_D()
 	ostringstream output;
 	printResponsesJSON(query_responses, output);
 	ASSERT_EQUAL(output.str(), correct_output);
+}
+
+void test_basic_E_example_1()
+{
+	ifstream input("Tests/test_E_example_1.txt");
+	RequestsContainer parsed_requests = readRequestsJson(input);
+	const auto query_responses = processRequests(parsed_requests, parsed_requests);
+	printResponsesJSON(query_responses, cout);
+}
+
+void test_basic_E_example_2()
+{
+	ifstream input("Tests/test_E_example_2.txt");
+	RequestsContainer parsed_requests = readRequestsJson(input);
+	const auto query_responses = processRequests(parsed_requests, parsed_requests);
+	printResponsesJSON(query_responses, cout);
+}
+
+void test_basic_E_example_3()
+{
+	ifstream input("Tests/test_E_example_3.txt");
+	RequestsContainer parsed_requests = readRequestsJson(input);
+	const auto query_responses = processRequests(parsed_requests, parsed_requests);
+	printResponsesJSON(query_responses, cout);
+}
+
+void test_basic_E_example_4()
+{
+	ifstream input("Tests/test_E_example_4_input.json");
+	RequestsContainer parsed_requests = readRequestsJson(input);
+	const auto query_responses = processRequests(parsed_requests, parsed_requests);
+	printResponsesJSON(query_responses, cout);
 }

@@ -1,11 +1,15 @@
 #include "Request.h"
 #include "Response.h"
+#include "RouteManager.h"
 #include "util.h"
+#include "router.h"
 #include <stdexcept>
 #include <sstream>
 #include <vector>
 #include <utility>
+#include <unordered_map>
 using namespace std;
+using namespace Graph;
 
 //======================================== UTILITY =============================================//
 
@@ -65,10 +69,14 @@ RequestHolder Request::create(Request::Type type)
         return make_unique<AddBusRequest>();
     case Request::Type::ADD_STOP:
         return make_unique<AddStopRequest>();
+    case Request::Type::ADD_ROUTING_SETTINGS:
+        return make_unique<AddRoutingSettings>();
     case Request::Type::GET_BUS_INFO:
         return make_unique<GetBusInfo>();
     case Request::Type::GET_STOP_INFO:
         return make_unique<GetStopInfo>();
+    case Request::Type::GET_ROUTE_INFO:
+        return make_unique<GetRouteInfo>();
     default:
         return nullptr;
     }
@@ -129,6 +137,12 @@ RequestsContainer readRequestsJson(std::istream& input)
             requests.queries.push_back(move(request));
         }
     }
+
+    if (doc.GetRoot().AsMap().count("routing_settings") > 0) {  // to make tests A to D work
+        const auto& routing_settings_json = doc.GetRoot().AsMap().at("routing_settings");
+        requests.routing_settings_request = Request::create(Request::Type::ADD_ROUTING_SETTINGS);
+        requests.routing_settings_request->parseFrom(routing_settings_json);
+    }    
     return requests;
 }
 
@@ -142,6 +156,9 @@ vector<ResponseHolder> processRequests(
     vector<ResponseHolder> result;
 
         // requests without return values (aka ModifyRequests) go here
+    if (modify_requests.routing_settings_request) {
+        static_cast<ModifyRequest&>(*modify_requests.routing_settings_request).process(manager);
+    }
     for (const auto& request_holder : modify_requests.fill_map_requests) {
         auto& request = static_cast<ModifyRequest&>(*request_holder);
         request.process(manager);
@@ -151,6 +168,24 @@ vector<ResponseHolder> processRequests(
         request.process(manager);
     }
 
+        // Router setup
+    auto graph = manager.buildGraph();
+    Router router(graph);
+    // EXPERIMENT
+    //auto path = router.BuildRoute(
+    //    manager.getVertexId("Biryulyovo Zapadnoye"), 
+    //    manager.getVertexId("Universam")
+    //);
+    //for (size_t i = 0; i < path->edge_count; ++i) {
+    //    cout << graph.GetEdge(router.GetRouteEdge(path->id, i)).bus_id << '\n';
+    //    cout << graph.GetEdge(router.GetRouteEdge(path->id, i)).from << " - "
+    //         << graph.GetEdge(router.GetRouteEdge(path->id, i)).to << " | weight: "
+    //         << graph.GetEdge(router.GetRouteEdge(path->id, i)).weight << '\n';
+    //}
+    // END EXPERIMENT
+    manager.setRouter(&router);
+
+        // requests with return values (aka QueryRequest) go here
     for (const auto& request_holder : query_requests.queries) {
         if (request_holder->type == Request::Type::GET_BUS_INFO) {
             const auto& request = static_cast<const GetBusInfo&>(*request_holder);
@@ -160,8 +195,25 @@ vector<ResponseHolder> processRequests(
             const auto& request = static_cast<const GetStopInfo&>(*request_holder);
             result.push_back(request.process(manager));
         }
+        if (request_holder->type == Request::Type::GET_ROUTE_INFO) {
+            const auto& request = static_cast<const GetRouteInfo&>(*request_holder);
+            result.push_back(request.process(manager));
+        }
     }
     return result;
+}
+
+//=================================== AddRoutingSettings =======================================//
+
+void AddRoutingSettings::process(RouteManager& route_mgr)
+{
+    route_mgr.setRouterSettings({bus_wait_time, bus_velocity});
+}
+
+void AddRoutingSettings::parseFrom(const Json::Node& input)
+{
+    bus_wait_time = (int)minutesToSeconds(input.AsMap().at("bus_wait_time").AsInt());
+    bus_velocity  = kphToMps(input.AsMap().at("bus_velocity").AsDouble());
 }
 
 //===================================== AddBusRequest ==========================================//
@@ -324,5 +376,50 @@ void GetStopInfo::parseFrom(string_view input)
 void GetStopInfo::parseFrom(const Json::Node& input)
 {
     stop_id = input.AsMap().at("name").AsString();
+    request_id = input.AsMap().at("id").AsInt();
+}
+
+//====================================== GetRouteInfo ==========================================//
+
+ResponseHolder GetRouteInfo::process(RouteManager& route_mgr) const
+{
+    ResponseHolder response = Response::create(Response::Type::ROUTE_INFO, request_id);
+    auto& concrete_response = static_cast<RouteInfoResponse&>(*response);
+    
+    concrete_response.set_wait_time((int)route_mgr.waitTime());
+    auto path = route_mgr.shortestPath(from, to);
+    if (path) {
+        auto route_description = RouteInfoResponse::Data();
+        route_description.total_time = path->weight;
+
+        const auto* router = route_mgr.getRouter();
+        if (!router) throw runtime_error("No router attached to RouteManager");
+        const auto& graph = router->getGraph();
+
+        for (size_t i = 0; i < path->edge_count; ++i) {
+            auto edge_id = router->GetRouteEdge(path->id, i);
+            const auto& edge = graph.GetEdge(edge_id);
+            if (edge.span_count == 0) { // waiting for a bus
+                RouteInfoResponse::WaitInfo info {};
+                info.stop_id = route_mgr.vertexIdToStopId(edge.from);
+                route_description.segments.push_back(move(info));
+            }
+            else {  // taking a ride
+                RouteInfoResponse::RideInfo info {};
+                info.bus_id = edge.bus_id;
+                info.span_count = edge.span_count;
+                info.time = edge.weight;
+                route_description.segments.push_back(move(info));
+            }
+        }
+        concrete_response.set_data(move(route_description));
+    }
+    return response;
+}
+
+void GetRouteInfo::parseFrom(const Json::Node& input)
+{
+    from = input.AsMap().at("from").AsString();
+    to = input.AsMap().at("to").AsString();
     request_id = input.AsMap().at("id").AsInt();
 }

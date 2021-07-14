@@ -9,6 +9,8 @@ ResponseHolder Response::create(Type type, size_t request_id)
         return make_unique<BusInfoResponse>(request_id);
     case Response::Type::STOP_INFO:
         return make_unique<StopInfoResponse>(request_id);
+    case Response::Type::ROUTE_INFO:
+        return make_unique<RouteInfoResponse>(request_id);
     default:
         return nullptr;
     }
@@ -76,6 +78,47 @@ void StopInfoResponse::printJson(std::ostream& out) const
     else {
         out << R"("request_id": )" << request_id << ",\n"
             << R"("error_message": "not found")" << '\n';
+    }
+    out << '}';
+}
+
+void RouteInfoResponse::printJson(std::ostream& out) const
+{
+    out << "{\n"
+        << R"("request_id": )" << request_id << ",\n";
+    if (data) {
+        out << R"("total_time": )" << secondsToMinutes(data->total_time) << ",\n"
+            << R"("items": )""[";
+        if (data->segments.size() > 0) out << '\n';
+        {   // printing variant<WaitInfo, RideInfo>> segments
+            bool first = true;
+            for (const auto& segment : data->segments) {
+                if (first) first = false;
+                else out << ", \n";
+                out << "{\n";
+                if (holds_alternative<WaitInfo>(segment)) {
+                    out << R"("type": "Wait",)""\n"
+                        << R"("stop_name": )"
+                        << "\"" << get<WaitInfo>(segment).stop_id << "\",\n"
+                        << R"("time": )" << secondsToMinutes(wait_time) << '\n';
+                }
+                else {
+                    const auto& ride_info = get<RideInfo>(segment);
+                    out << R"("type": "Bus",)""\n"
+                        << R"("bus": )"
+                        << "\"" << ride_info.bus_id << "\",\n"
+                        << R"("span_count": )" << ride_info.span_count << ",\n"
+                        << R"("time": )" 
+                        << secondsToMinutes(ride_info.time) << '\n';
+                }
+                out << "}";
+            }
+            if (!first) out << '\n';
+        }
+        out << "]\n";
+    }
+    else {
+        out << R"("error_message": "not found")" << '\n';
     }
     out << '}';
 }
