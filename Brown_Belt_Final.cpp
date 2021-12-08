@@ -1,6 +1,6 @@
 //==============================================================================================//
 //                                                                                              //
-//	https://www.coursera.org/learn/c-plus-plus-brown/programming/GBep2/transportnyi-spravochnik-chast-e //
+//    https://www.coursera.org/learn/c-plus-plus-brown/programming/GBep2/transportnyi-spravochnik-chast-e //
 //                                                                                              //
 //==============================================================================================//
 
@@ -28,15 +28,15 @@ int main()
 {
     setOutPrecision(6);
 
-    TestRunner tr;
+    //TestRunner tr;
     //RUN_TEST(tr, test_router);
     //RUN_TEST(tr, test_routing_settings);
     //RUN_TEST(tr, test_SI_units);
-    RUN_TEST(tr, test_basic_E_example_4);
     //RUN_TEST(tr, test_basic_A);
     //RUN_TEST(tr, test_basic_B);
     //RUN_TEST(tr, test_basic_C);
     //RUN_TEST(tr, test_basic_D);
+    //RUN_TEST(tr, test_basic_E_example_4);
 
     const auto requests = readRequestsJson();
     const auto query_responses = processRequests(requests, requests);

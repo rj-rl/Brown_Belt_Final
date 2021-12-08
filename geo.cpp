@@ -21,7 +21,7 @@ Coordinate Coordinate::parseFromJson(const Json::Node& input)
     return {lat, lon};
 }
 
-// haversine formula
+// uses the haversine formula
 double distance(Coordinate punkt_a, Coordinate punkt_b)
 {
     // recommended version:
@@ -38,4 +38,4 @@ double distance(Coordinate punkt_a, Coordinate punkt_b)
     return d;
 }
 
-}	// ns ::geo
+}    // ns ::geo
